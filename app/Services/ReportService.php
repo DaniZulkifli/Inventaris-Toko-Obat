@@ -33,7 +33,7 @@ class ReportService
         'purchase' => 'Pembelian',
         'sales' => 'Penjualan',
         'simple_margin' => 'Margin Sederhana',
-        'stock_movement' => 'Stock Movement',
+        'stock_movement' => 'Mutasi Stok',
         'supplier' => 'Supplier',
     ];
 
@@ -488,7 +488,7 @@ class ReportService
                 $this->column('category', 'Kategori'),
                 $this->column('batch_number', 'Batch'),
                 $this->column('supplier', 'Supplier'),
-                $this->column('expiry_date', 'Expiry', 'date'),
+                $this->column('expiry_date', 'Kedaluwarsa', 'date'),
                 $this->column('current_stock', 'Stok', 'quantity', 'right'),
                 $this->column('purchase_price', 'Harga Beli', 'currency', 'right'),
                 $this->column('inventory_value', 'Nilai', 'currency', 'right'),
@@ -499,8 +499,8 @@ class ReportService
                 $this->column('category', 'Kategori'),
                 $this->column('saleable_stock', 'Stok Jual', 'quantity', 'right'),
                 $this->column('minimum_stock', 'Minimum', 'quantity', 'right'),
-                $this->column('reorder_level', 'Reorder', 'quantity', 'right'),
-                $this->column('unit', 'Unit'),
+                $this->column('reorder_level', 'Batas Reorder', 'quantity', 'right'),
+                $this->column('unit', 'Satuan'),
                 $this->column('status', 'Status', 'badge'),
             ],
             'purchase' => [
@@ -510,8 +510,8 @@ class ReportService
                 $this->column('status', 'Status', 'badge'),
                 $this->column('medicine', 'Obat'),
                 $this->column('batch_number', 'Batch'),
-                $this->column('quantity', 'Qty', 'quantity', 'right'),
-                $this->column('unit_cost', 'Cost', 'currency', 'right'),
+                $this->column('quantity', 'Jumlah', 'quantity', 'right'),
+                $this->column('unit_cost', 'Harga Satuan', 'currency', 'right'),
                 $this->column('subtotal', 'Subtotal', 'currency', 'right'),
             ],
             'sales' => [
@@ -521,7 +521,7 @@ class ReportService
                 $this->column('payment_method', 'Pembayaran', 'badge'),
                 $this->column('medicine', 'Obat'),
                 $this->column('batch_number', 'Batch'),
-                $this->column('quantity', 'Qty', 'quantity', 'right'),
+                $this->column('quantity', 'Jumlah', 'quantity', 'right'),
                 $this->column('unit_price', 'Harga', 'currency', 'right'),
                 $this->column('subtotal', 'Subtotal', 'currency', 'right'),
             ],
@@ -531,9 +531,9 @@ class ReportService
                 $this->column('cashier', 'Kasir'),
                 $this->column('category', 'Kategori'),
                 $this->column('medicine', 'Obat'),
-                $this->column('quantity', 'Qty', 'quantity', 'right'),
-                $this->column('subtotal', 'Revenue', 'currency', 'right'),
-                $this->column('cost_total', 'Cost', 'currency', 'right'),
+                $this->column('quantity', 'Jumlah', 'quantity', 'right'),
+                $this->column('subtotal', 'Pendapatan', 'currency', 'right'),
+                $this->column('cost_total', 'Biaya', 'currency', 'right'),
                 $this->column('gross_margin', 'Margin', 'currency', 'right'),
             ],
             'stock_movement' => [
@@ -541,11 +541,11 @@ class ReportService
                 $this->column('medicine', 'Obat'),
                 $this->column('batch_number', 'Batch'),
                 $this->column('movement_type', 'Tipe', 'badge'),
-                $this->column('reference_type', 'Reference'),
+                $this->column('reference_type', 'Referensi'),
                 $this->column('quantity_in', 'Masuk', 'quantity', 'right'),
                 $this->column('quantity_out', 'Keluar', 'quantity', 'right'),
                 $this->column('stock_after', 'Stok Akhir', 'quantity', 'right'),
-                $this->column('created_by', 'User'),
+                $this->column('created_by', 'Pengguna'),
             ],
             'supplier' => [
                 $this->column('name', 'Supplier'),
@@ -598,23 +598,23 @@ class ReportService
             ],
             'purchase' => [
                 ['label' => 'Item PO', 'value' => $rows->count(), 'format' => 'number'],
-                ['label' => 'Total Qty', 'value' => $rows->sum('quantity'), 'format' => 'quantity'],
+                ['label' => 'Total Jumlah', 'value' => $rows->sum('quantity'), 'format' => 'quantity'],
                 ['label' => 'Subtotal', 'value' => $rows->sum('subtotal'), 'format' => 'currency'],
             ],
             'sales' => [
                 ['label' => 'Item Terjual', 'value' => $rows->count(), 'format' => 'number'],
-                ['label' => 'Total Qty', 'value' => $rows->sum('quantity'), 'format' => 'quantity'],
+                ['label' => 'Total Jumlah', 'value' => $rows->sum('quantity'), 'format' => 'quantity'],
                 ['label' => 'Total Penjualan', 'value' => $rows->sum('subtotal'), 'format' => 'currency'],
             ],
             'simple_margin' => [
-                ['label' => 'Revenue', 'value' => $rows->sum('subtotal'), 'format' => 'currency'],
-                ['label' => 'Cost', 'value' => $rows->sum('cost_total'), 'format' => 'currency'],
+                ['label' => 'Pendapatan', 'value' => $rows->sum('subtotal'), 'format' => 'currency'],
+                ['label' => 'Biaya', 'value' => $rows->sum('cost_total'), 'format' => 'currency'],
                 ['label' => 'Margin', 'value' => $rows->sum('gross_margin'), 'format' => 'currency'],
             ],
             'stock_movement' => [
-                ['label' => 'Movement', 'value' => $rows->count(), 'format' => 'number'],
-                ['label' => 'Qty Masuk', 'value' => $rows->sum('quantity_in'), 'format' => 'quantity'],
-                ['label' => 'Qty Keluar', 'value' => $rows->sum('quantity_out'), 'format' => 'quantity'],
+                ['label' => 'Mutasi', 'value' => $rows->count(), 'format' => 'number'],
+                ['label' => 'Jumlah Masuk', 'value' => $rows->sum('quantity_in'), 'format' => 'quantity'],
+                ['label' => 'Jumlah Keluar', 'value' => $rows->sum('quantity_out'), 'format' => 'quantity'],
             ],
             'supplier' => [
                 ['label' => 'Supplier', 'value' => $rows->count(), 'format' => 'number'],
@@ -960,9 +960,33 @@ class ReportService
         return collect($cases)
             ->map(fn (\BackedEnum $case): array => [
                 'value' => (string) $case->value,
-                'label' => str((string) $case->value)->replace('_', ' ')->title()->toString(),
+                'label' => $this->enumLabel((string) $case->value),
             ])
             ->all();
+    }
+
+    private function enumLabel(string $value): string
+    {
+        return [
+            'available' => 'Tersedia',
+            'expired' => 'Kedaluwarsa',
+            'depleted' => 'Habis',
+            'quarantined' => 'Karantina',
+            'draft' => 'Draft',
+            'received' => 'Diterima',
+            'cash' => 'Tunai',
+            'transfer' => 'Transfer',
+            'qris' => 'QRIS',
+            'other' => 'Lainnya',
+            'opening_stock' => 'Stok Awal',
+            'purchase_in' => 'Pembelian Masuk',
+            'sale_out' => 'Penjualan Keluar',
+            'usage_out' => 'Pemakaian Keluar',
+            'adjustment_in' => 'Penyesuaian Masuk',
+            'adjustment_out' => 'Penyesuaian Keluar',
+            'cancel_usage' => 'Pembatalan Pemakaian',
+            'cancel_adjustment' => 'Pembatalan Penyesuaian',
+        ][$value] ?? str($value)->replace('_', ' ')->title()->toString();
     }
 
     private function dateOrDefault(string $value, Carbon $default): string

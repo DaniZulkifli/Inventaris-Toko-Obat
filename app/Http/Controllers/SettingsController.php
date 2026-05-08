@@ -29,12 +29,12 @@ class SettingsController extends Controller
         'store_name' => 'Nama toko',
         'store_address' => 'Alamat toko',
         'store_phone' => 'Nomor kontak toko',
-        'timezone' => 'Timezone aplikasi',
-        'default_minimum_stock' => 'Default minimum stock obat baru',
+        'timezone' => 'Zona waktu aplikasi',
+        'default_minimum_stock' => 'Stok minimum bawaan obat baru',
         'expiry_warning_days' => 'Batas hari hampir kedaluwarsa',
         'pagination_per_page' => 'Jumlah data default per halaman',
-        'report_export_formats' => 'Format export laporan yang didukung',
-        'upload_max_file_size_mb' => 'Batas upload gambar obat',
+        'report_export_formats' => 'Format ekspor laporan yang didukung',
+        'upload_max_file_size_mb' => 'Batas unggah gambar obat',
         'theme_primary_color' => 'Warna utama tema hijau',
     ];
 
@@ -58,13 +58,13 @@ class SettingsController extends Controller
             );
         }
 
-        $activityLog->record('update', 'settings', 'Mengubah settings toko', $request->user(), [
+        $activityLog->record('update', 'settings', 'Mengubah pengaturan toko', $request->user(), [
             'keys' => array_keys($request->allowedSettings()),
         ], $request);
 
         return redirect()
             ->route('settings.index')
-            ->with('success', 'Settings berhasil diperbarui.');
+            ->with('success', 'Pengaturan berhasil diperbarui.');
     }
 
     private function settingsPayload(): array

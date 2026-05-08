@@ -1,11 +1,9 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DataTable from '@/Components/UI/DataTable.vue';
-import SkeletonBlock from '@/Components/UI/SkeletonBlock.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
-import UiButton from '@/Components/UI/UiButton.vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import {
     Activity,
     AlertTriangle,
@@ -14,16 +12,13 @@ import {
     CalendarClock,
     ClipboardList,
     FileClock,
-    PackageSearch,
-    RefreshCw,
     ShoppingCart,
     WalletCards,
 } from 'lucide-vue-next';
 
 const page = usePage();
-const refreshing = ref(false);
 
-const currentPage = computed(() => page.props.currentPage ?? { title: 'Dashboard', route: 'dashboard' });
+const currentPage = computed(() => page.props.currentPage ?? { title: 'Dasbor', route: 'dashboard' });
 const dashboard = computed(() => page.props.dashboard ?? null);
 const isDashboard = computed(() => currentPage.value.route === 'dashboard' && dashboard.value);
 const sections = computed(() => dashboard.value?.sections ?? {});
@@ -50,17 +45,6 @@ const cardTones = {
     sales_today_by_user: 'bg-sky-50 text-sky-700',
     purchases_this_month: 'bg-indigo-50 text-indigo-700',
     inventory_value: 'bg-emerald-50 text-emerald-700',
-};
-
-const refreshDashboard = () => {
-    refreshing.value = true;
-    router.reload({
-        only: ['dashboard'],
-        preserveScroll: true,
-        onFinish: () => {
-            refreshing.value = false;
-        },
-    });
 };
 
 const formatNumber = (value) => new Intl.NumberFormat('id-ID').format(Number(value ?? 0));
@@ -99,18 +83,6 @@ const placeholderColumns = [
 
     <AuthenticatedLayout>
         <div v-if="isDashboard" class="space-y-6">
-            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                    <p class="text-sm font-medium text-emerald-700">Toko Obat Sehat Sentosa</p>
-                    <h2 class="mt-1 text-2xl font-semibold text-slate-950">Ringkasan Operasional</h2>
-                    <p class="mt-1 text-sm text-slate-500">Update terakhir {{ formatDateTime(dashboard.generated_at) }}</p>
-                </div>
-                <UiButton variant="secondary" :loading="refreshing" @click="refreshDashboard">
-                    <RefreshCw class="h-4 w-4" />
-                    Refresh
-                </UiButton>
-            </div>
-
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div
                     v-for="card in dashboard.cards"
@@ -120,8 +92,7 @@ const placeholderColumns = [
                     <div class="flex items-center justify-between gap-3">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-medium text-slate-500">{{ card.label }}</p>
-                            <SkeletonBlock v-if="refreshing" class="mt-3" :lines="1" />
-                            <p v-else class="mt-2 truncate text-3xl font-semibold text-slate-950">{{ cardValue(card) }}</p>
+                            <p class="mt-2 truncate text-3xl font-semibold text-slate-950">{{ cardValue(card) }}</p>
                         </div>
                         <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md" :class="cardTones[card.key]">
                             <component :is="cardIcons[card.key] ?? Activity" class="h-5 w-5" />
@@ -130,7 +101,7 @@ const placeholderColumns = [
                 </div>
             </div>
 
-            <div class="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
+            <div class="grid items-start gap-6 xl:grid-cols-[1.35fr_0.65fr]">
                 <section class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="mb-4 flex items-center justify-between gap-3">
                         <h3 class="text-base font-semibold text-slate-950">
@@ -139,9 +110,7 @@ const placeholderColumns = [
                         <StatusBadge status="low_stock" label="Prioritas" />
                     </div>
 
-                    <SkeletonBlock v-if="refreshing" :lines="5" />
-
-                    <div v-else-if="dashboard.role === 'employee'" class="space-y-3">
+                    <div v-if="dashboard.role === 'employee'" class="max-h-[22rem] space-y-3 overflow-y-auto pr-1">
                         <div
                             v-for="item in sections.important_stock"
                             :key="item.id"
@@ -158,7 +127,7 @@ const placeholderColumns = [
                         </div>
                     </div>
 
-                    <div v-else class="space-y-3">
+                    <div v-else class="max-h-[22rem] space-y-3 overflow-y-auto pr-1">
                         <div
                             v-for="batch in sections.near_expiry_batches"
                             :key="batch.id"
@@ -183,9 +152,7 @@ const placeholderColumns = [
                         {{ dashboard.role === 'super_admin' ? 'Aktivitas Terbaru' : dashboard.role === 'admin' ? 'Draft Adjustment' : 'Penjualan Saya' }}
                     </h3>
 
-                    <SkeletonBlock v-if="refreshing" class="mt-5" :lines="5" />
-
-                    <div v-else-if="dashboard.role === 'super_admin'" class="mt-4 space-y-3">
+                    <div v-if="dashboard.role === 'super_admin'" class="mt-4 max-h-[22rem] space-y-3 overflow-y-auto pr-1">
                         <div v-for="activity in sections.latest_activity" :key="activity.id" class="rounded-md border border-slate-100 p-3">
                             <div class="flex items-center justify-between gap-3">
                                 <span class="text-sm font-semibold text-slate-950">{{ activity.module }}</span>
@@ -198,7 +165,7 @@ const placeholderColumns = [
                         </div>
                     </div>
 
-                    <div v-else-if="dashboard.role === 'admin'" class="mt-4 space-y-3">
+                    <div v-else-if="dashboard.role === 'admin'" class="mt-4 max-h-[22rem] space-y-3 overflow-y-auto pr-1">
                         <div v-for="adjustment in sections.draft_adjustments" :key="adjustment.id" class="rounded-md border border-slate-100 p-3">
                             <div class="font-semibold text-slate-950">{{ adjustment.code }}</div>
                             <div class="mt-1 text-sm text-slate-500">{{ adjustment.creator }} · {{ formatDate(adjustment.adjustment_date) }}</div>
@@ -216,10 +183,10 @@ const placeholderColumns = [
                 </section>
             </div>
 
-            <div v-if="dashboard.role === 'admin'" class="grid gap-6 xl:grid-cols-2">
+            <div v-if="dashboard.role === 'admin'" class="grid items-start gap-6 xl:grid-cols-2">
                 <section class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-                    <h3 class="text-base font-semibold text-slate-950">Purchase Order Terbaru</h3>
-                    <div class="mt-4 space-y-3">
+                    <h3 class="text-base font-semibold text-slate-950">Pesanan Pembelian Terbaru</h3>
+                    <div class="mt-4 max-h-[22rem] space-y-3 overflow-y-auto pr-1">
                         <div v-for="purchaseOrder in sections.latest_purchase_orders" :key="purchaseOrder.id" class="flex items-center justify-between gap-4 rounded-md border border-slate-100 p-3">
                             <div>
                                 <div class="font-semibold text-slate-950">{{ purchaseOrder.code }}</div>
@@ -231,8 +198,8 @@ const placeholderColumns = [
                 </section>
 
                 <section class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-                    <h3 class="text-base font-semibold text-slate-950">Stock Usage Terbaru</h3>
-                    <div class="mt-4 space-y-3">
+                    <h3 class="text-base font-semibold text-slate-950">Pemakaian Stok Terbaru</h3>
+                    <div class="mt-4 max-h-[22rem] space-y-3 overflow-y-auto pr-1">
                         <div v-for="usage in sections.latest_stock_usages" :key="usage.id" class="flex items-center justify-between gap-4 rounded-md border border-slate-100 p-3">
                             <div>
                                 <div class="font-semibold text-slate-950">{{ usage.code }}</div>
@@ -246,17 +213,6 @@ const placeholderColumns = [
         </div>
 
         <div v-else class="space-y-5">
-            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-slate-950">{{ currentPage.title }}</h2>
-                    <p class="mt-1 text-sm text-slate-500">Belum ada data pada tampilan ini.</p>
-                </div>
-                <UiButton variant="primary">
-                    <RefreshCw class="h-4 w-4" />
-                    Refresh
-                </UiButton>
-            </div>
-
             <DataTable
                 :columns="placeholderColumns"
                 :rows="[]"

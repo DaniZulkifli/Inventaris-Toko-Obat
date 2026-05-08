@@ -25,6 +25,7 @@ const mode = ref('create');
 const selected = ref(null);
 const showFormModal = ref(false);
 const showDeleteModal = ref(false);
+const deleteProcessing = ref(false);
 
 const form = useForm({
     name: '',
@@ -91,9 +92,12 @@ const confirmDelete = (row) => {
 };
 
 const destroy = () => {
+    deleteProcessing.value = true;
+
     router.delete(route('references.destroy', [activeTab.value, selected.value.id]), {
         preserveScroll: true,
         onFinish: () => {
+            deleteProcessing.value = false;
             showDeleteModal.value = false;
         },
     });
@@ -105,11 +109,7 @@ const destroy = () => {
 
     <AuthenticatedLayout>
         <div class="space-y-6">
-            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-slate-950">Referensi Obat</h2>
-                    <p class="mt-1 text-sm text-slate-500">Kategori, satuan, dan bentuk sediaan dalam satu halaman</p>
-                </div>
+            <div class="flex justify-end">
                 <UiButton @click="openCreate">
                     <Plus class="h-4 w-4" />
                     Tambah {{ activeMeta.singular }}
@@ -163,6 +163,7 @@ const destroy = () => {
         <DeleteConfirmationModal
             :show="showDeleteModal"
             :item-name="selected?.name"
+            :processing="deleteProcessing"
             @close="showDeleteModal = false"
             @confirm="destroy"
         />

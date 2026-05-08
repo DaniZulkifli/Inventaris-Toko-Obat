@@ -10,8 +10,9 @@ import Pagination from '@/Components/UI/Pagination.vue';
 import SelectInput from '@/Components/UI/SelectInput.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import UiButton from '@/Components/UI/UiButton.vue';
+import { useRealtimeFilters } from '@/Composables/useRealtimeFilters';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-vue-next';
+import { Pencil, Plus, Trash2 } from 'lucide-vue-next';
 
 const props = defineProps({
     users: { type: Object, required: true },
@@ -21,6 +22,7 @@ const props = defineProps({
 
 const showFormModal = ref(false);
 const showDeleteModal = ref(false);
+const deleteProcessing = ref(false);
 const selectedUser = ref(null);
 const mode = ref('create');
 const filterForm = ref({
@@ -40,7 +42,7 @@ const form = useForm({
 });
 
 const columns = [
-    { key: 'name', label: 'User', sortable: true },
+    { key: 'name', label: 'Pengguna', sortable: true },
     { key: 'role', label: 'Role' },
     { key: 'is_active', label: 'Status' },
     { key: 'created_at', label: 'Dibuat' },
@@ -63,8 +65,8 @@ const activeOptions = [
     { value: 0, label: 'Nonaktif' },
 ];
 
-const modalTitle = computed(() => mode.value === 'create' ? 'Tambah User' : 'Ubah User');
-const submitLabel = computed(() => mode.value === 'create' ? 'Buat User' : 'Simpan Perubahan');
+const modalTitle = computed(() => mode.value === 'create' ? 'Tambah Pengguna' : 'Ubah Pengguna');
+const submitLabel = computed(() => mode.value === 'create' ? 'Buat Pengguna' : 'Simpan Perubahan');
 
 const roleLabel = (role) => roleOptions.find((option) => option.value === role)?.label ?? role;
 const formatDate = (value) => value
@@ -123,36 +125,29 @@ const openDelete = (user) => {
 };
 
 const destroy = () => {
+    deleteProcessing.value = true;
+
     router.delete(route('users.destroy', selectedUser.value.id), {
         preserveScroll: true,
         onFinish: () => {
+            deleteProcessing.value = false;
             showDeleteModal.value = false;
         },
     });
 };
 
-const applyFilters = () => {
-    router.get(route('users.index'), filterForm.value, {
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
-    });
-};
+useRealtimeFilters(filterForm, () => route('users.index'));
 </script>
 
 <template>
-    <Head title="Users" />
+    <Head title="Pengguna" />
 
     <AuthenticatedLayout>
         <div class="space-y-6">
-            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-slate-950">Users</h2>
-                    <p class="mt-1 text-sm text-slate-500">{{ stats.active }} aktif dari {{ stats.total }} user</p>
-                </div>
+            <div class="flex justify-end">
                 <UiButton @click="openCreate">
                     <Plus class="h-4 w-4" />
-                    Tambah User
+                    Tambah Pengguna
                 </UiButton>
             </div>
 
@@ -178,20 +173,14 @@ const applyFilters = () => {
             <DataTable
                 :columns="columns"
                 :rows="users.data"
-                empty-title="Belum ada user"
-                empty-description="User yang dibuat Super Admin akan tampil di sini."
+                empty-title="Belum ada pengguna"
+                empty-description="Pengguna yang dibuat Super Admin akan tampil di sini."
             >
                 <template #filters>
-                    <form class="grid gap-3 lg:grid-cols-[1fr_12rem_12rem_auto]" @submit.prevent="applyFilters">
+                    <form class="grid gap-3 lg:grid-cols-[1fr_12rem_12rem]" @submit.prevent>
                         <FormInput id="search" v-model="filterForm.search" label="Pencarian" placeholder="Nama, email, atau telepon" />
-                        <SelectInput id="role" v-model="filterForm.role" label="Role" :options="roleOptions" placeholder="Semua role" />
+                        <SelectInput id="role" v-model="filterForm.role" label="Peran" :options="roleOptions" placeholder="Semua peran" />
                         <SelectInput id="status" v-model="filterForm.status" label="Status" :options="statusOptions" placeholder="Semua status" />
-                        <div class="flex items-end">
-                            <UiButton type="submit" class="w-full">
-                                <Search class="h-4 w-4" />
-                                Filter
-                            </UiButton>
-                        </div>
                     </form>
                 </template>
 
@@ -211,11 +200,11 @@ const applyFilters = () => {
                     </template>
                     <template v-else-if="column.key === 'actions'">
                         <div class="flex justify-end gap-2">
-                            <IconButton label="Ubah user" @click="openEdit(row)">
+                            <IconButton label="Ubah pengguna" @click="openEdit(row)">
                                 <Pencil class="h-4 w-4" />
                             </IconButton>
                             <IconButton
-                                label="Hapus user"
+                                label="Hapus pengguna"
                                 variant="danger"
                                 :disabled="!row.can_delete"
                                 @click="openDelete(row)"
@@ -245,17 +234,18 @@ const applyFilters = () => {
                 <FormInput id="name" v-model="form.name" label="Nama" required :error="form.errors.name" />
                 <FormInput id="email" v-model="form.email" type="email" label="Email" required :error="form.errors.email" />
                 <FormInput id="phone" v-model="form.phone" label="Telepon" :error="form.errors.phone" />
-                <SelectInput id="role" v-model="form.role" label="Role" :options="roleOptions" required :error="form.errors.role" />
+                <SelectInput id="role" v-model="form.role" label="Peran" :options="roleOptions" required :error="form.errors.role" />
                 <SelectInput id="is_active" v-model="form.is_active" label="Status" :options="activeOptions" required :error="form.errors.is_active" />
                 <div class="hidden sm:block" />
-                <FormInput id="password" v-model="form.password" type="password" label="Password" :required="mode === 'create'" :error="form.errors.password" />
-                <FormInput id="password_confirmation" v-model="form.password_confirmation" type="password" label="Konfirmasi Password" :required="mode === 'create'" :error="form.errors.password_confirmation" />
+                <FormInput id="password" v-model="form.password" type="password" label="Kata Sandi" :required="mode === 'create'" :error="form.errors.password" />
+                <FormInput id="password_confirmation" v-model="form.password_confirmation" type="password" label="Konfirmasi Kata Sandi" :required="mode === 'create'" :error="form.errors.password_confirmation" />
             </div>
         </FloatingFormModal>
 
         <DeleteConfirmationModal
             :show="showDeleteModal"
             :item-name="selectedUser?.email"
+            :processing="deleteProcessing"
             @close="showDeleteModal = false"
             @confirm="destroy"
         />

@@ -65,7 +65,7 @@ class PurchaseOrderController extends Controller
                     ]),
                 'statuses' => [
                     ['value' => PurchaseOrderStatus::Draft->value, 'label' => 'Draft'],
-                    ['value' => PurchaseOrderStatus::Received->value, 'label' => 'Received'],
+                    ['value' => PurchaseOrderStatus::Received->value, 'label' => 'Diterima'],
                 ],
                 'no_expiry_classifications' => [
                     MedicineClassification::Alkes->value,
@@ -84,7 +84,7 @@ class PurchaseOrderController extends Controller
             'total_amount' => $purchaseOrder->total_amount,
         ]);
 
-        return back()->with('success', 'Purchase order draft berhasil dibuat.');
+        return back()->with('success', 'Draft pesanan pembelian berhasil dibuat.');
     }
 
     public function update(
@@ -100,7 +100,7 @@ class PurchaseOrderController extends Controller
             'total_amount' => $purchaseOrder->total_amount,
         ]);
 
-        return back()->with('success', 'Purchase order draft berhasil diubah.');
+        return back()->with('success', 'Draft pesanan pembelian berhasil diubah.');
     }
 
     public function destroy(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderService $purchaseOrderService, ActivityLogService $activityLog): RedirectResponse
@@ -112,7 +112,7 @@ class PurchaseOrderController extends Controller
             'purchase_order_id' => $purchaseOrder->id,
         ]);
 
-        return back()->with('success', 'Purchase order draft berhasil dihapus.');
+        return back()->with('success', 'Draft pesanan pembelian berhasil dihapus.');
     }
 
     public function receive(
@@ -128,7 +128,7 @@ class PurchaseOrderController extends Controller
             'total_amount' => $purchaseOrder->total_amount,
         ]);
 
-        return back()->with('success', 'Purchase order berhasil diterima dan stok sudah diperbarui.');
+        return back()->with('success', 'Pesanan pembelian berhasil diterima dan stok sudah diperbarui.');
     }
 
     /**

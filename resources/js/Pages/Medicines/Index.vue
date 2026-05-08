@@ -15,8 +15,9 @@ import SelectInput from '@/Components/UI/SelectInput.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import TextareaInput from '@/Components/UI/TextareaInput.vue';
 import UiButton from '@/Components/UI/UiButton.vue';
+import { useRealtimeFilters } from '@/Composables/useRealtimeFilters';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-vue-next';
+import { Pencil, Plus, Trash2 } from 'lucide-vue-next';
 
 const props = defineProps({
     medicines: { type: Object, required: true },
@@ -32,6 +33,7 @@ const batchMode = ref('create');
 const showMedicineModal = ref(false);
 const showBatchModal = ref(false);
 const showDeleteModal = ref(false);
+const deleteProcessing = ref(false);
 const deleteTarget = ref(null);
 const deleteType = ref('medicine');
 const selectedMedicine = ref(null);
@@ -119,7 +121,7 @@ const medicineColumns = [
 const batchColumns = [
     { key: 'batch_number', label: 'Batch', sortable: true },
     { key: 'medicine', label: 'Obat' },
-    { key: 'expiry_date', label: 'Expiry' },
+    { key: 'expiry_date', label: 'Kedaluwarsa' },
     { key: 'current_stock', label: 'Stok' },
     { key: 'status', label: 'Status' },
     { key: 'actions', label: '', align: 'right' },
@@ -200,12 +202,14 @@ const submitBatch = () => {
         : batchForm.patch(route('medicine-batches.update', selectedBatch.value.id), options);
 };
 
-const applyMedicineFilters = () => {
-    router.get(route('medicines.index'), { ...medicineFilters.value, tab: 'medicines' }, { preserveState: true, preserveScroll: true, replace: true });
-};
-const applyBatchFilters = () => {
-    router.get(route('medicines.index'), { ...batchFilters.value, tab: 'batches' }, { preserveState: true, preserveScroll: true, replace: true });
-};
+useRealtimeFilters(medicineFilters, () => route('medicines.index'), {
+    data: () => ({ ...medicineFilters.value, tab: 'medicines' }),
+    canVisit: () => activeTab.value === 'medicines',
+});
+useRealtimeFilters(batchFilters, () => route('medicines.index'), {
+    data: () => ({ ...batchFilters.value, tab: 'batches' }),
+    canVisit: () => activeTab.value === 'batches',
+});
 const confirmDelete = (type, row) => {
     deleteType.value = type;
     deleteTarget.value = row;
@@ -213,9 +217,12 @@ const confirmDelete = (type, row) => {
 };
 const destroy = () => {
     const routeName = deleteType.value === 'medicine' ? 'medicines.destroy' : 'medicine-batches.destroy';
+    deleteProcessing.value = true;
+
     router.delete(route(routeName, deleteTarget.value.id), {
         preserveScroll: true,
         onFinish: () => {
+            deleteProcessing.value = false;
             showDeleteModal.value = false;
         },
     });
@@ -227,12 +234,8 @@ const destroy = () => {
 
     <AuthenticatedLayout>
         <div class="space-y-6">
-            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-slate-950">Obat dan Batch</h2>
-                    <p class="mt-1 text-sm text-slate-500">Kelola master obat dan metadata batch dalam satu halaman</p>
-                </div>
-                <div v-if="canManage" class="flex gap-2">
+            <div v-if="canManage" class="flex justify-end">
+                <div class="flex gap-2">
                     <UiButton v-if="activeTab === 'medicines'" @click="openCreateMedicine">
                         <Plus class="h-4 w-4" />
                         Tambah Obat
@@ -266,16 +269,10 @@ const destroy = () => {
 
             <DataTable v-if="activeTab === 'medicines'" :columns="medicineColumns" :rows="medicines.data" empty-title="Belum ada obat">
                 <template #filters>
-                    <form class="grid gap-3 lg:grid-cols-[1fr_14rem_12rem_auto]" @submit.prevent="applyMedicineFilters">
+                    <form class="grid gap-3 lg:grid-cols-[1fr_14rem_12rem]" @submit.prevent>
                         <FormInput id="search" v-model="medicineFilters.search" label="Pencarian" placeholder="Kode, barcode, nama" />
                         <SelectInput id="classification" v-model="medicineFilters.classification" label="Klasifikasi" :options="options.classifications" placeholder="Semua klasifikasi" />
                         <SelectInput v-if="canManage" id="status" v-model="medicineFilters.status" label="Status" :options="medicineStatusOptions" placeholder="Semua status" />
-                        <div class="flex items-end">
-                            <UiButton type="submit" class="w-full">
-                                <Search class="h-4 w-4" />
-                                Filter
-                            </UiButton>
-                        </div>
                     </form>
                 </template>
 
@@ -311,17 +308,11 @@ const destroy = () => {
 
             <DataTable v-else :columns="batchColumns" :rows="batches?.data ?? []" empty-title="Belum ada batch">
                 <template #filters>
-                    <form class="grid gap-3 xl:grid-cols-[1fr_14rem_12rem_12rem_auto]" @submit.prevent="applyBatchFilters">
+                    <form class="grid gap-3 xl:grid-cols-[1fr_14rem_12rem_12rem]" @submit.prevent>
                         <FormInput id="batch_search" v-model="batchFilters.batch_search" label="Pencarian" placeholder="Batch atau obat" />
                         <SelectInput id="medicine_id" v-model="batchFilters.medicine_id" label="Obat" :options="medicineOptions" placeholder="Semua obat" />
                         <SelectInput id="supplier_id" v-model="batchFilters.supplier_id" label="Supplier" :options="supplierOptions" placeholder="Semua supplier" />
                         <SelectInput id="batch_status" v-model="batchFilters.batch_status" label="Status" :options="options.batch_statuses" placeholder="Semua status" />
-                        <div class="flex items-end">
-                            <UiButton type="submit" class="w-full">
-                                <Search class="h-4 w-4" />
-                                Filter
-                            </UiButton>
-                        </div>
                     </form>
                 </template>
 
@@ -368,7 +359,7 @@ const destroy = () => {
                 <FormInput id="code" v-model="medicineForm.code" label="Kode" help="Kosongkan untuk kode otomatis" :error="medicineForm.errors.code" />
                 <BarcodeInput id="barcode" v-model="medicineForm.barcode" label="Barcode" :error="medicineForm.errors.barcode" />
                 <FormInput id="name" v-model="medicineForm.name" label="Nama Obat" required :error="medicineForm.errors.name" />
-                <FormInput id="generic_name" v-model="medicineForm.generic_name" label="Generic Name" :error="medicineForm.errors.generic_name" />
+                <FormInput id="generic_name" v-model="medicineForm.generic_name" label="Nama Generik" :error="medicineForm.errors.generic_name" />
                 <SelectInput id="medicine_category_id" v-model="medicineForm.medicine_category_id" label="Kategori" :options="categoryOptions" required :error="medicineForm.errors.medicine_category_id" />
                 <SelectInput id="unit_id" v-model="medicineForm.unit_id" label="Satuan" :options="unitOptions" required :error="medicineForm.errors.unit_id" />
                 <SelectInput id="dosage_form_id" v-model="medicineForm.dosage_form_id" label="Bentuk Sediaan" :options="dosageFormOptions" :error="medicineForm.errors.dosage_form_id" />
@@ -376,11 +367,11 @@ const destroy = () => {
                 <FormInput id="manufacturer" v-model="medicineForm.manufacturer" label="Produsen" :error="medicineForm.errors.manufacturer" />
                 <FormInput id="registration_number" v-model="medicineForm.registration_number" label="Nomor Registrasi" :error="medicineForm.errors.registration_number" />
                 <FormInput id="active_ingredient" v-model="medicineForm.active_ingredient" label="Kandungan Aktif" :error="medicineForm.errors.active_ingredient" />
-                <FormInput id="strength" v-model="medicineForm.strength" label="Strength" :error="medicineForm.errors.strength" />
-                <CurrencyInput id="default_purchase_price" v-model="medicineForm.default_purchase_price" label="Harga Beli Default" required :error="medicineForm.errors.default_purchase_price" />
+                <FormInput id="strength" v-model="medicineForm.strength" label="Kekuatan" :error="medicineForm.errors.strength" />
+                <CurrencyInput id="default_purchase_price" v-model="medicineForm.default_purchase_price" label="Harga Beli Bawaan" required :error="medicineForm.errors.default_purchase_price" />
                 <CurrencyInput id="selling_price" v-model="medicineForm.selling_price" label="Harga Jual" required :error="medicineForm.errors.selling_price" />
-                <NumberInput id="minimum_stock" v-model="medicineForm.minimum_stock" label="Minimum Stock" required step="0.001" :error="medicineForm.errors.minimum_stock" />
-                <NumberInput id="reorder_level" v-model="medicineForm.reorder_level" label="Reorder Level" required step="0.001" :error="medicineForm.errors.reorder_level" />
+                <NumberInput id="minimum_stock" v-model="medicineForm.minimum_stock" label="Stok Minimum" required step="0.001" :error="medicineForm.errors.minimum_stock" />
+                <NumberInput id="reorder_level" v-model="medicineForm.reorder_level" label="Batas Reorder" required step="0.001" :error="medicineForm.errors.reorder_level" />
                 <SelectInput id="requires_prescription" v-model="medicineForm.requires_prescription" label="Butuh Resep" :options="booleanOptions" required :error="medicineForm.errors.requires_prescription" />
                 <SelectInput id="is_active" v-model="medicineForm.is_active" label="Status" :options="activeOptions" required :error="medicineForm.errors.is_active" />
                 <div class="md:col-span-2">
@@ -410,8 +401,8 @@ const destroy = () => {
             <div class="grid gap-4 md:grid-cols-2">
                 <SelectInput id="batch_medicine_id" v-model="batchForm.medicine_id" label="Obat" :options="medicineOptions" required :error="batchForm.errors.medicine_id" />
                 <SelectInput id="batch_supplier_id" v-model="batchForm.supplier_id" label="Supplier" :options="batchMode === 'create' ? activeSupplierOptions : supplierOptions" :error="batchForm.errors.supplier_id" />
-                <FormInput id="batch_number" v-model="batchForm.batch_number" label="Batch Number" help="Kosongkan untuk AUTO-YYYYMMDD-####" :error="batchForm.errors.batch_number" />
-                <DateInput id="expiry_date" v-model="batchForm.expiry_date" label="Expiry Date" :error="batchForm.errors.expiry_date" />
+                <FormInput id="batch_number" v-model="batchForm.batch_number" label="Nomor Batch" help="Kosongkan untuk AUTO-YYYYMMDD-####" :error="batchForm.errors.batch_number" />
+                <DateInput id="expiry_date" v-model="batchForm.expiry_date" label="Tanggal Kedaluwarsa" :error="batchForm.errors.expiry_date" />
                 <CurrencyInput id="purchase_price" v-model="batchForm.purchase_price" label="Harga Beli" required :error="batchForm.errors.purchase_price" />
                 <CurrencyInput id="batch_selling_price" v-model="batchForm.selling_price" label="Harga Jual Batch" :error="batchForm.errors.selling_price" />
                 <NumberInput v-if="batchMode === 'create'" id="initial_stock" v-model="batchForm.initial_stock" label="Stok Awal" required step="0.001" :error="batchForm.errors.initial_stock" />
@@ -424,6 +415,7 @@ const destroy = () => {
         <DeleteConfirmationModal
             :show="showDeleteModal"
             :item-name="deleteType === 'medicine' ? deleteTarget?.name : deleteTarget?.batch_number"
+            :processing="deleteProcessing"
             @close="showDeleteModal = false"
             @confirm="destroy"
         />

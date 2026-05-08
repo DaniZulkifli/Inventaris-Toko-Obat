@@ -15,9 +15,7 @@ use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\StockUsageController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserManagementController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,14 +28,7 @@ use Inertia\Inertia;
 |
 */
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => false,
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::redirect('/', '/login');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -52,6 +43,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/medicines', [MedicineController::class, 'index'])->name('medicines.index');
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
+    Route::get('/sales/create', [SaleController::class, 'create'])->name('sales.create');
     Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
     Route::get('/sales/my-history', [SaleController::class, 'myHistory'])->name('sales.my-history');
     Route::get('/stock-summary', [StockMonitoringController::class, 'index'])->name('stock.summary');

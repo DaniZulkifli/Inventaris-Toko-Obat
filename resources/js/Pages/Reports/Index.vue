@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DataTable from '@/Components/UI/DataTable.vue';
 import DateInput from '@/Components/UI/DateInput.vue';
@@ -8,8 +8,9 @@ import Pagination from '@/Components/UI/Pagination.vue';
 import SelectInput from '@/Components/UI/SelectInput.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import UiButton from '@/Components/UI/UiButton.vue';
-import { Head, router } from '@inertiajs/vue3';
-import { Download, FileSpreadsheet, FileText, RotateCcw, Search, X } from 'lucide-vue-next';
+import { useRealtimeFilters } from '@/Composables/useRealtimeFilters';
+import { Head } from '@inertiajs/vue3';
+import { Download, FileSpreadsheet, FileText, X } from 'lucide-vue-next';
 
 const props = defineProps({
     report: { type: Object, required: true },
@@ -82,59 +83,31 @@ const formattedValue = (value, format) => {
 
 const summaryValue = (item) => formattedValue(item.value, item.format);
 
-const applyFilters = () => {
-    router.get(route('reports.index'), filterForm.value, {
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
-    });
-};
+useRealtimeFilters(filterForm, () => route('reports.index'));
 
-const resetFilters = () => {
-    filterForm.value = {
-        jenis_laporan: type.value,
-        date_from: '',
-        date_to: '',
-        expiry_from: '',
-        expiry_to: '',
-        category_id: '',
-        medicine_id: '',
-        supplier_id: '',
-        batch_status: '',
-        purchase_status: '',
-        cashier_id: '',
-        payment_method: '',
-        batch_id: '',
-        movement_type: '',
-        created_by: '',
-        supplier_status: '',
-        supplier_name: '',
-    };
-    applyFilters();
-};
-
-const changeReportType = () => {
-    filterForm.value = {
-        ...filterForm.value,
-        date_from: '',
-        date_to: '',
-        expiry_from: '',
-        expiry_to: '',
-        category_id: '',
-        medicine_id: '',
-        supplier_id: '',
-        batch_status: '',
-        purchase_status: '',
-        cashier_id: '',
-        payment_method: '',
-        batch_id: '',
-        movement_type: '',
-        created_by: '',
-        supplier_status: '',
-        supplier_name: '',
-    };
-    applyFilters();
-};
+watch(
+    () => filterForm.value.jenis_laporan,
+    () => {
+        Object.assign(filterForm.value, {
+            date_from: '',
+            date_to: '',
+            expiry_from: '',
+            expiry_to: '',
+            category_id: '',
+            medicine_id: '',
+            supplier_id: '',
+            batch_status: '',
+            purchase_status: '',
+            cashier_id: '',
+            payment_method: '',
+            batch_id: '',
+            movement_type: '',
+            created_by: '',
+            supplier_status: '',
+            supplier_name: '',
+        });
+    },
+);
 
 const filenameFromDisposition = (disposition, fallback) => {
     const match = disposition?.match(/filename="?([^"]+)"?/i);
@@ -182,11 +155,7 @@ const exportReport = async (format) => {
 
     <AuthenticatedLayout>
         <div class="space-y-6">
-            <div class="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-slate-950">Laporan Terpadu</h2>
-                    <p class="mt-1 text-sm text-slate-500">Semua laporan operasional dipilih dari satu halaman melalui jenis laporan.</p>
-                </div>
+            <div class="flex justify-end">
                 <div class="flex flex-wrap gap-2">
                     <UiButton variant="secondary" :loading="exportLoading === 'pdf'" :disabled="exportLoading !== ''" @click="exportReport('pdf')">
                         <FileText class="h-4 w-4" />
@@ -210,7 +179,7 @@ const exportReport = async (format) => {
             </div>
 
             <section class="rounded-md border border-slate-200 bg-white">
-                <form class="space-y-4 p-4" @submit.prevent="applyFilters">
+                <form class="space-y-4 p-4" @submit.prevent>
                     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                         <SelectInput
                             id="jenis_laporan"
@@ -218,12 +187,11 @@ const exportReport = async (format) => {
                             label="Jenis Laporan"
                             :options="options.report_types"
                             required
-                            @change="changeReportType"
                         />
                         <DateInput v-if="usesTransactionDate" id="date_from" v-model="filterForm.date_from" label="Dari Tanggal" required />
                         <DateInput v-if="usesTransactionDate" id="date_to" v-model="filterForm.date_to" label="Sampai Tanggal" required />
-                        <DateInput v-if="isExpiry" id="expiry_from" v-model="filterForm.expiry_from" label="Expiry Dari" required />
-                        <DateInput v-if="isExpiry" id="expiry_to" v-model="filterForm.expiry_to" label="Expiry Sampai" required />
+                        <DateInput v-if="isExpiry" id="expiry_from" v-model="filterForm.expiry_from" label="Kedaluwarsa Dari" required />
+                        <DateInput v-if="isExpiry" id="expiry_to" v-model="filterForm.expiry_to" label="Kedaluwarsa Sampai" required />
                     </div>
 
                     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -295,7 +263,7 @@ const exportReport = async (format) => {
                             v-if="isMovement"
                             id="movement_type"
                             v-model="filterForm.movement_type"
-                            label="Tipe Movement"
+                            label="Tipe Mutasi"
                             :options="options.movement_types"
                             placeholder="Semua tipe"
                         />
@@ -303,7 +271,7 @@ const exportReport = async (format) => {
                             v-if="isMovement"
                             id="created_by"
                             v-model="filterForm.created_by"
-                            label="User Pembuat"
+                            label="Pengguna Pembuat"
                             :options="options.users"
                             placeholder="Semua user"
                         />
@@ -324,16 +292,6 @@ const exportReport = async (format) => {
                         />
                     </div>
 
-                    <div class="flex flex-col gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
-                        <UiButton variant="secondary" @click="resetFilters">
-                            <RotateCcw class="h-4 w-4" />
-                            Reset
-                        </UiButton>
-                        <UiButton type="submit">
-                            <Search class="h-4 w-4" />
-                            Filter
-                        </UiButton>
-                    </div>
                 </form>
             </section>
 

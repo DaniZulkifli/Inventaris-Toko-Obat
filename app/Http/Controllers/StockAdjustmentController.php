@@ -56,8 +56,8 @@ class StockAdjustmentController extends Controller
             'options' => [
                 'statuses' => [
                     ['value' => StockAdjustmentStatus::Draft->value, 'label' => 'Draft'],
-                    ['value' => StockAdjustmentStatus::Approved->value, 'label' => 'Approved'],
-                    ['value' => StockAdjustmentStatus::Cancelled->value, 'label' => 'Cancelled'],
+                    ['value' => StockAdjustmentStatus::Approved->value, 'label' => 'Disetujui'],
+                    ['value' => StockAdjustmentStatus::Cancelled->value, 'label' => 'Dibatalkan'],
                 ],
                 'batches' => $this->batchOptions(),
             ],
@@ -73,7 +73,7 @@ class StockAdjustmentController extends Controller
             'status' => $adjustment->status?->value ?? $adjustment->status,
         ]);
 
-        return back()->with('success', 'Stock adjustment draft berhasil dibuat.');
+        return back()->with('success', 'Draft penyesuaian stok berhasil dibuat.');
     }
 
     public function update(
@@ -88,7 +88,7 @@ class StockAdjustmentController extends Controller
             'stock_adjustment_id' => $adjustment->id,
         ]);
 
-        return back()->with('success', 'Stock adjustment draft berhasil diubah.');
+        return back()->with('success', 'Draft penyesuaian stok berhasil diubah.');
     }
 
     public function approve(
@@ -103,7 +103,7 @@ class StockAdjustmentController extends Controller
             'stock_adjustment_id' => $adjustment->id,
         ]);
 
-        return back()->with('success', 'Stock adjustment berhasil disetujui dan stok sudah diperbarui.');
+        return back()->with('success', 'Penyesuaian stok berhasil disetujui dan stok sudah diperbarui.');
     }
 
     public function cancel(
@@ -123,7 +123,7 @@ class StockAdjustmentController extends Controller
             'reason' => $validated['cancel_reason'],
         ]);
 
-        return back()->with('success', 'Stock adjustment approved berhasil dibatalkan.');
+        return back()->with('success', 'Penyesuaian stok yang disetujui berhasil dibatalkan.');
     }
 
     /**

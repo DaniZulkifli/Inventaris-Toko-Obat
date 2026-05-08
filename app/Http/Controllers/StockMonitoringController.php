@@ -56,19 +56,19 @@ class StockMonitoringController extends Controller
      */
     private function filters(Request $request): array
     {
-        $stockStatus = $request->input('stock_status', 'all');
-        $batchStatus = $request->input('batch_status', '');
+        $stockStatus = (string) ($request->input('stock_status') ?? 'all');
+        $batchStatus = (string) ($request->input('batch_status') ?? '');
 
         return [
             'tab' => in_array($request->input('tab', 'medicines'), ['medicines', 'batches'], true) ? $request->input('tab', 'medicines') : 'medicines',
             'search' => trim((string) $request->input('search', '')),
             'stock_status' => in_array($stockStatus, ['all', 'safe', 'low_stock', 'out_of_stock'], true) ? $stockStatus : 'all',
             'batch_status' => in_array($batchStatus, array_column($this->batchStatusOptions(), 'value'), true) ? $batchStatus : '',
-            'category_id' => $request->input('category_id', ''),
-            'medicine_id' => $request->input('medicine_id', ''),
-            'supplier_id' => $request->input('supplier_id', ''),
-            'expiry_from' => $request->input('expiry_from', ''),
-            'expiry_to' => $request->input('expiry_to', ''),
+            'category_id' => (string) ($request->input('category_id') ?? ''),
+            'medicine_id' => (string) ($request->input('medicine_id') ?? ''),
+            'supplier_id' => (string) ($request->input('supplier_id') ?? ''),
+            'expiry_from' => (string) ($request->input('expiry_from') ?? ''),
+            'expiry_to' => (string) ($request->input('expiry_to') ?? ''),
         ];
     }
 
@@ -281,10 +281,10 @@ class StockMonitoringController extends Controller
     private function batchStatusLabel(?string $status): string
     {
         return [
-            'available' => 'Available',
-            'expired' => 'Expired',
-            'depleted' => 'Depleted',
-            'quarantined' => 'Quarantined',
+            'available' => 'Tersedia',
+            'expired' => 'Kedaluwarsa',
+            'depleted' => 'Habis',
+            'quarantined' => 'Karantina',
         ][$status] ?? '-';
     }
 

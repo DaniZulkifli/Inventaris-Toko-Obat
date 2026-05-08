@@ -9,9 +9,9 @@ import IconButton from '@/Components/UI/IconButton.vue';
 import Pagination from '@/Components/UI/Pagination.vue';
 import SelectInput from '@/Components/UI/SelectInput.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
-import UiButton from '@/Components/UI/UiButton.vue';
-import { Head, router } from '@inertiajs/vue3';
-import { Eye, RotateCcw, Search } from 'lucide-vue-next';
+import { useRealtimeFilters } from '@/Composables/useRealtimeFilters';
+import { Head } from '@inertiajs/vue3';
+import { Eye } from 'lucide-vue-next';
 
 const props = defineProps({
     movements: { type: Object, required: true },
@@ -76,27 +76,7 @@ const movementTextTone = (movementType) => {
     return 'text-slate-700';
 };
 
-const applyFilters = () => {
-    router.get(route('stock-movements.index'), filterForm.value, {
-        preserveScroll: true,
-        preserveState: true,
-        replace: true,
-    });
-};
-
-const resetFilters = () => {
-    filterForm.value = {
-        search: '',
-        date_from: '',
-        date_to: '',
-        medicine_id: '',
-        batch_id: '',
-        movement_type: '',
-        created_by: '',
-        reference_type: '',
-    };
-    applyFilters();
-};
+useRealtimeFilters(filterForm, () => route('stock-movements.index'));
 
 const openDetail = (movement) => {
     detailTarget.value = movement;
@@ -105,41 +85,26 @@ const openDetail = (movement) => {
 </script>
 
 <template>
-    <Head title="Stock Movement" />
+    <Head title="Mutasi Stok" />
 
     <AuthenticatedLayout>
         <div class="space-y-6">
-            <div>
-                <h2 class="text-2xl font-semibold text-slate-950">Stock Movement</h2>
-                <p class="mt-1 text-sm text-slate-500">Audit pergerakan stok per obat, batch, referensi, dan user.</p>
-            </div>
-
             <DataTable
                 :columns="columns"
                 :rows="movements.data"
-                empty-title="Belum ada stock movement"
-                empty-description="Movement akan muncul setelah stok awal, pembelian, penjualan, usage, atau adjustment tercatat."
+                empty-title="Belum ada mutasi stok"
+                empty-description="Mutasi akan muncul setelah stok awal, pembelian, penjualan, pemakaian, atau penyesuaian tercatat."
             >
                 <template #filters>
-                    <form class="grid gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-[minmax(13rem,1.2fr)_11rem_11rem_12rem_12rem_12rem_12rem_auto]" @submit.prevent="applyFilters">
+                    <form class="grid gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-[minmax(13rem,1.2fr)_11rem_11rem_12rem_12rem_12rem_12rem]" @submit.prevent>
                         <FormInput id="movement_search" v-model="filterForm.search" label="Pencarian" placeholder="Obat, batch, referensi" />
                         <DateInput id="date_from" v-model="filterForm.date_from" label="Dari" />
                         <DateInput id="date_to" v-model="filterForm.date_to" label="Sampai" />
                         <SelectInput id="movement_medicine" v-model="filterForm.medicine_id" label="Obat" :options="options.medicines" placeholder="Semua obat" />
                         <SelectInput id="movement_batch" v-model="filterForm.batch_id" label="Batch" :options="options.batches" placeholder="Semua batch" />
-                        <SelectInput id="movement_type" v-model="filterForm.movement_type" label="Tipe Movement" :options="options.movement_types" placeholder="Semua tipe" />
-                        <SelectInput id="created_by" v-model="filterForm.created_by" label="User" :options="options.creators" placeholder="Semua user" />
+                        <SelectInput id="movement_type" v-model="filterForm.movement_type" label="Tipe Mutasi" :options="options.movement_types" placeholder="Semua tipe" />
+                        <SelectInput id="created_by" v-model="filterForm.created_by" label="Pengguna" :options="options.creators" placeholder="Semua pengguna" />
                         <SelectInput id="reference_type" v-model="filterForm.reference_type" label="Referensi" :options="options.reference_types" placeholder="Semua referensi" />
-                        <div class="flex items-end gap-2 md:col-span-2 xl:col-span-4 2xl:col-span-8">
-                            <UiButton type="submit">
-                                <Search class="h-4 w-4" />
-                                Filter
-                            </UiButton>
-                            <UiButton variant="secondary" @click="resetFilters">
-                                <RotateCcw class="h-4 w-4" />
-                                Reset
-                            </UiButton>
-                        </div>
                     </form>
                 </template>
 
@@ -150,7 +115,7 @@ const openDetail = (movement) => {
                     </template>
                     <template v-else-if="column.key === 'batch_number'">
                         <div class="font-semibold text-slate-900">{{ value ?? '-' }}</div>
-                        <div class="mt-1 text-xs text-slate-500">{{ row.batch_expiry_date ?? 'Tanpa expiry' }}</div>
+                        <div class="mt-1 text-xs text-slate-500">{{ row.batch_expiry_date ?? 'Tanpa kedaluwarsa' }}</div>
                     </template>
                     <template v-else-if="column.key === 'movement_type'">
                         <StatusBadge :status="row.movement_type" :label="row.movement_label" />
@@ -167,7 +132,7 @@ const openDetail = (movement) => {
                         <div class="mt-1 text-xs text-slate-500">{{ row.created_by ?? '-' }}</div>
                     </template>
                     <template v-else-if="column.key === 'actions'">
-                        <IconButton label="Detail stock movement" @click="openDetail(row)">
+                        <IconButton label="Detail mutasi stok" @click="openDetail(row)">
                             <Eye class="h-4 w-4" />
                         </IconButton>
                     </template>
@@ -180,7 +145,7 @@ const openDetail = (movement) => {
             </DataTable>
         </div>
 
-        <DetailModal :show="showDetailModal" :title="detailTarget?.movement_label ?? 'Detail Stock Movement'" max-width="3xl" @close="showDetailModal = false">
+        <DetailModal :show="showDetailModal" :title="detailTarget?.movement_label ?? 'Detail Mutasi Stok'" max-width="3xl" @close="showDetailModal = false">
             <div v-if="detailTarget" class="space-y-5">
                 <div class="grid gap-4 text-sm md:grid-cols-3">
                     <div>
@@ -191,7 +156,7 @@ const openDetail = (movement) => {
                     <div>
                         <div class="text-xs font-semibold uppercase text-slate-500">Batch</div>
                         <div class="mt-1 font-semibold text-slate-950">{{ detailTarget.batch_number ?? '-' }}</div>
-                        <div class="text-xs text-slate-500">{{ detailTarget.batch_expiry_date ?? 'Tanpa expiry' }}</div>
+                        <div class="text-xs text-slate-500">{{ detailTarget.batch_expiry_date ?? 'Tanpa kedaluwarsa' }}</div>
                     </div>
                     <div>
                         <div class="text-xs font-semibold uppercase text-slate-500">Tipe</div>
@@ -202,7 +167,7 @@ const openDetail = (movement) => {
                         <div class="mt-1 text-slate-700">{{ detailTarget.reference_label }}</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-slate-500">User</div>
+                        <div class="text-xs font-semibold uppercase text-slate-500">Pengguna</div>
                         <div class="mt-1 text-slate-700">{{ detailTarget.created_by ?? '-' }}</div>
                     </div>
                     <div>
@@ -229,7 +194,7 @@ const openDetail = (movement) => {
                         <div class="mt-1 text-lg font-semibold text-slate-950">{{ formatQuantity(detailTarget.stock_after) }}</div>
                     </div>
                     <div class="rounded-md bg-slate-50 p-3">
-                        <div class="text-xs font-semibold uppercase text-slate-500">Unit Cost</div>
+                        <div class="text-xs font-semibold uppercase text-slate-500">Harga Satuan</div>
                         <div class="mt-1 text-lg font-semibold text-slate-950">{{ formatCurrency(detailTarget.unit_cost_snapshot) }}</div>
                     </div>
                 </div>

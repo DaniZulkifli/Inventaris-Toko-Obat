@@ -1,8 +1,18 @@
 <script setup>
+import Spinner from '@/Components/UI/Spinner.vue';
+
 defineProps({
     type: {
         type: String,
         default: 'button',
+    },
+    disabled: {
+        type: Boolean,
+        default: false,
+    },
+    loading: {
+        type: Boolean,
+        default: false,
     },
 });
 </script>
@@ -10,8 +20,10 @@ defineProps({
 <template>
     <button
         :type="type"
-        class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150"
+        :disabled="disabled || loading"
+        class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50"
     >
+        <Spinner v-if="loading" size="sm" />
         <slot />
     </button>
 </template>

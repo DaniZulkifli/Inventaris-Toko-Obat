@@ -31,9 +31,14 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Log in" />
+        <Head title="Login" />
 
-        <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-slate-950">Login</h1>
+            <p class="mt-1 text-sm text-slate-500">Masuk dengan akun yang sudah terdaftar.</p>
+        </div>
+
+        <div v-if="status" class="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
             {{ status }}
         </div>
 
@@ -55,7 +60,7 @@ const submit = () => {
             </div>
 
             <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+                <InputLabel for="password" value="Kata Sandi" />
 
                 <TextInput
                     id="password"
@@ -69,24 +74,24 @@ const submit = () => {
                 <InputError class="mt-2" :message="form.errors.password" />
             </div>
 
-            <div class="block mt-4">
+            <div class="mt-4 block">
                 <label class="flex items-center">
                     <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600">Remember me</span>
+                    <span class="ms-2 text-sm text-slate-600">Ingat saya</span>
                 </label>
             </div>
 
-            <div class="flex items-center justify-end mt-4">
+            <div class="mt-5 flex items-center justify-between gap-4">
                 <Link
                     v-if="canResetPassword"
                     :href="route('password.request')"
-                    class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    class="rounded-md text-sm font-medium text-emerald-700 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                 >
-                    Forgot your password?
+                    Lupa password?
                 </Link>
 
-                <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                    Log in
+                <PrimaryButton :loading="form.processing">
+                    Masuk
                 </PrimaryButton>
             </div>
         </form>

@@ -11,8 +11,9 @@ import SelectInput from '@/Components/UI/SelectInput.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import TextareaInput from '@/Components/UI/TextareaInput.vue';
 import UiButton from '@/Components/UI/UiButton.vue';
+import { useRealtimeFilters } from '@/Composables/useRealtimeFilters';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-vue-next';
+import { Pencil, Plus, Trash2 } from 'lucide-vue-next';
 
 const props = defineProps({
     suppliers: { type: Object, required: true },
@@ -21,6 +22,7 @@ const props = defineProps({
 
 const showFormModal = ref(false);
 const showDeleteModal = ref(false);
+const deleteProcessing = ref(false);
 const selected = ref(null);
 const mode = ref('create');
 const filterForm = ref({
@@ -92,13 +94,7 @@ const submit = () => {
         : form.patch(route('suppliers.update', selected.value.id), options);
 };
 
-const applyFilters = () => {
-    router.get(route('suppliers.index'), filterForm.value, {
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
-    });
-};
+useRealtimeFilters(filterForm, () => route('suppliers.index'));
 
 const confirmDelete = (supplier) => {
     selected.value = supplier;
@@ -106,9 +102,12 @@ const confirmDelete = (supplier) => {
 };
 
 const destroy = () => {
+    deleteProcessing.value = true;
+
     router.delete(route('suppliers.destroy', selected.value.id), {
         preserveScroll: true,
         onFinish: () => {
+            deleteProcessing.value = false;
             showDeleteModal.value = false;
         },
     });
@@ -120,11 +119,7 @@ const destroy = () => {
 
     <AuthenticatedLayout>
         <div class="space-y-6">
-            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-slate-950">Supplier</h2>
-                    <p class="mt-1 text-sm text-slate-500">Supplier nonaktif tidak dipakai sebagai default pilihan purchase order</p>
-                </div>
+            <div class="flex justify-end">
                 <UiButton @click="openCreate">
                     <Plus class="h-4 w-4" />
                     Tambah Supplier
@@ -133,15 +128,9 @@ const destroy = () => {
 
             <DataTable :columns="columns" :rows="suppliers.data" empty-title="Belum ada supplier">
                 <template #filters>
-                    <form class="grid gap-3 lg:grid-cols-[1fr_12rem_auto]" @submit.prevent="applyFilters">
+                    <form class="grid gap-3 lg:grid-cols-[1fr_12rem]" @submit.prevent>
                         <FormInput id="search" v-model="filterForm.search" label="Pencarian" placeholder="Nama, email, kontak" />
                         <SelectInput id="status" v-model="filterForm.status" label="Status" :options="statusOptions" placeholder="Semua status" />
-                        <div class="flex items-end">
-                            <UiButton type="submit" class="w-full">
-                                <Search class="h-4 w-4" />
-                                Filter
-                            </UiButton>
-                        </div>
                     </form>
                 </template>
 
@@ -194,6 +183,12 @@ const destroy = () => {
             </div>
         </FloatingFormModal>
 
-        <DeleteConfirmationModal :show="showDeleteModal" :item-name="selected?.name" @close="showDeleteModal = false" @confirm="destroy" />
+        <DeleteConfirmationModal
+            :show="showDeleteModal"
+            :item-name="selected?.name"
+            :processing="deleteProcessing"
+            @close="showDeleteModal = false"
+            @confirm="destroy"
+        />
     </AuthenticatedLayout>
 </template>

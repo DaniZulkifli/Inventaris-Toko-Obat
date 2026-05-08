@@ -19,14 +19,25 @@ use Inertia\Response;
 
 class SaleController extends Controller
 {
-    public function index(Request $request, StockService $stockService): Response
+    public function index(Request $request): Response
     {
-        return $this->renderIndex($request, $stockService, onlyMine: false);
+        return $this->renderIndex($request, onlyMine: false);
     }
 
-    public function myHistory(Request $request, StockService $stockService): Response
+    public function create(StockService $stockService): Response
     {
-        return $this->renderIndex($request, $stockService, onlyMine: true);
+        return Inertia::render('Sales/Create', [
+            'options' => [
+                'medicines' => $this->medicineOptions($stockService),
+                'saleable_batches' => $this->saleableBatchOptions($stockService),
+                'payment_methods' => $this->paymentMethodOptions(),
+            ],
+        ]);
+    }
+
+    public function myHistory(Request $request): Response
+    {
+        return $this->renderIndex($request, onlyMine: true);
     }
 
     public function store(Request $request, SaleService $saleService, ActivityLogService $activityLog): RedirectResponse
@@ -39,10 +50,10 @@ class SaleController extends Controller
             'payment_method' => $sale->payment_method?->value ?? $sale->payment_method,
         ]);
 
-        return back()->with('success', "Penjualan {$sale->invoice_number} berhasil disimpan.");
+        return redirect()->route('sales.index')->with('success', "Penjualan {$sale->invoice_number} berhasil disimpan.");
     }
 
-    private function renderIndex(Request $request, StockService $stockService, bool $onlyMine): Response
+    private function renderIndex(Request $request, bool $onlyMine): Response
     {
         $user = $request->user();
         $role = $user->role?->value ?? $user->role;
@@ -87,14 +98,7 @@ class SaleController extends Controller
             'historyScope' => $historyScope,
             'canCreate' => $request->routeIs('sales.index'),
             'options' => [
-                'medicines' => $this->medicineOptions($stockService),
-                'saleable_batches' => $this->saleableBatchOptions($stockService),
-                'payment_methods' => [
-                    ['value' => PaymentMethod::Cash->value, 'label' => 'Cash'],
-                    ['value' => PaymentMethod::Transfer->value, 'label' => 'Transfer'],
-                    ['value' => PaymentMethod::Qris->value, 'label' => 'QRIS'],
-                    ['value' => PaymentMethod::Other->value, 'label' => 'Other'],
-                ],
+                'payment_methods' => $this->paymentMethodOptions(),
                 'cashiers' => $historyScope === 'all'
                     ? User::query()->orderBy('name')->get(['id', 'name'])->map(fn (User $cashier): array => [
                         'value' => $cashier->id,
@@ -103,6 +107,19 @@ class SaleController extends Controller
                     : [],
             ],
         ]);
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function paymentMethodOptions(): array
+    {
+        return [
+            ['value' => PaymentMethod::Cash->value, 'label' => 'Tunai'],
+            ['value' => PaymentMethod::Transfer->value, 'label' => 'Transfer'],
+            ['value' => PaymentMethod::Qris->value, 'label' => 'QRIS'],
+            ['value' => PaymentMethod::Other->value, 'label' => 'Lainnya'],
+        ];
     }
 
     /**

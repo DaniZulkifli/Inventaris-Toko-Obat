@@ -15,8 +15,9 @@ import TextareaInput from '@/Components/UI/TextareaInput.vue';
 import UiButton from '@/Components/UI/UiButton.vue';
 import CurrencyInput from '@/Components/UI/CurrencyInput.vue';
 import Modal from '@/Components/Modal.vue';
+import { useRealtimeFilters } from '@/Composables/useRealtimeFilters';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { CheckCircle2, Eye, Pencil, Plus, RotateCcw, Search, Trash2, X } from 'lucide-vue-next';
+import { CheckCircle2, Eye, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-vue-next';
 
 const props = defineProps({
     purchaseOrders: { type: Object, required: true },
@@ -175,13 +176,7 @@ const submit = () => {
         : form.patch(route('purchase-orders.update', selected.value.id), options);
 };
 
-const applyFilters = () => {
-    router.get(route('purchase-orders.index'), filterForm.value, {
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
-    });
-};
+useRealtimeFilters(filterForm, () => route('purchase-orders.index'));
 
 const openDetail = (purchaseOrder) => {
     detailTarget.value = purchaseOrder;
@@ -222,18 +217,14 @@ const receive = () => {
 </script>
 
 <template>
-    <Head title="Purchase Order" />
+    <Head title="Pesanan Pembelian" />
 
     <AuthenticatedLayout>
         <div class="space-y-6">
-            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-slate-950">Purchase Order</h2>
-                    <p class="mt-1 text-sm text-slate-500">Draft tidak mengubah stok; stok bertambah saat PO diterima</p>
-                </div>
+            <div class="flex justify-end">
                 <UiButton variant="secondary" @click="openCreate">
                     <Plus class="h-4 w-4" />
-                    PO Baru
+                    Pesanan Baru
                 </UiButton>
             </div>
 
@@ -241,7 +232,7 @@ const receive = () => {
                 <div class="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <h3 class="text-base font-semibold text-slate-950">
-                            {{ mode === 'create' ? 'Form Purchase Order' : `Ubah ${selected?.code}` }}
+                            {{ mode === 'create' ? 'Form Pesanan Pembelian' : `Ubah ${selected?.code}` }}
                         </h3>
                         <p class="mt-1 text-sm text-slate-500">Total dihitung ulang di backend saat disimpan</p>
                     </div>
@@ -264,7 +255,7 @@ const receive = () => {
                 <form class="space-y-5 p-4" @submit.prevent="submit">
                     <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_12rem_12rem]">
                         <SelectInput id="supplier_id" v-model="form.supplier_id" label="Supplier Aktif" :options="activeSupplierOptions" required :error="form.errors.supplier_id" />
-                        <DateInput id="order_date" v-model="form.order_date" label="Order Date" required :error="form.errors.order_date" />
+                        <DateInput id="order_date" v-model="form.order_date" label="Tanggal Pesanan" required :error="form.errors.order_date" />
                         <CurrencyInput id="discount" v-model="form.discount" label="Diskon" :error="form.errors.discount" />
                     </div>
 
@@ -292,21 +283,21 @@ const receive = () => {
                                 <FormInput
                                     :id="`items_${index}_batch`"
                                     v-model="item.batch_number"
-                                    label="Batch Number"
+                                    label="Nomor Batch"
                                     help="Kosongkan untuk nomor AUTO"
                                     :error="itemError(index, 'batch_number')"
                                 />
                                 <DateInput
                                     :id="`items_${index}_expiry`"
                                     v-model="item.expiry_date"
-                                    label="Expiry Date"
+                                    label="Tanggal Kedaluwarsa"
                                     :required="requiresExpiry(item)"
                                     :error="itemError(index, 'expiry_date')"
                                 />
                                 <NumberInput
                                     :id="`items_${index}_quantity`"
                                     v-model="item.quantity"
-                                    label="Qty"
+                                    label="Jumlah"
                                     required
                                     min="0.001"
                                     step="0.001"
@@ -315,7 +306,7 @@ const receive = () => {
                                 <CurrencyInput
                                     :id="`items_${index}_unit_cost`"
                                     v-model="item.unit_cost"
-                                    label="Unit Cost"
+                                    label="Harga Satuan"
                                     required
                                     :error="itemError(index, 'unit_cost')"
                                 />
@@ -334,7 +325,7 @@ const receive = () => {
                         </div>
                     </div>
 
-                    <TextareaInput id="notes" v-model="form.notes" label="Notes" :error="form.errors.notes" />
+                    <TextareaInput id="notes" v-model="form.notes" label="Catatan" :error="form.errors.notes" />
 
                     <div class="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
                         <UiButton v-if="mode === 'edit'" variant="secondary" :disabled="form.processing" @click="resetForm">
@@ -349,20 +340,14 @@ const receive = () => {
                 </form>
             </section>
 
-            <DataTable :columns="columns" :rows="purchaseOrders.data" empty-title="Belum ada purchase order">
+            <DataTable :columns="columns" :rows="purchaseOrders.data" empty-title="Belum ada pesanan pembelian">
                 <template #filters>
-                    <form class="grid gap-3 xl:grid-cols-[1fr_14rem_11rem_11rem_11rem_auto]" @submit.prevent="applyFilters">
+                    <form class="grid gap-3 xl:grid-cols-[1fr_14rem_11rem_11rem_11rem]" @submit.prevent>
                         <FormInput id="search" v-model="filterForm.search" label="Kode PO" placeholder="Kode PO atau supplier" />
                         <SelectInput id="filter_supplier" v-model="filterForm.supplier_id" label="Supplier" :options="supplierOptions" placeholder="Semua supplier" />
                         <SelectInput id="filter_status" v-model="filterForm.status" label="Status" :options="options.statuses" placeholder="Semua status" />
                         <DateInput id="date_from" v-model="filterForm.date_from" label="Dari" />
                         <DateInput id="date_to" v-model="filterForm.date_to" label="Sampai" />
-                        <div class="flex items-end">
-                            <UiButton type="submit" class="w-full">
-                                <Search class="h-4 w-4" />
-                                Filter
-                            </UiButton>
-                        </div>
                     </form>
                 </template>
 
@@ -388,7 +373,7 @@ const receive = () => {
                     </template>
                     <template v-else-if="column.key === 'actions'">
                         <div class="flex justify-end gap-2">
-                            <IconButton label="Detail purchase order" @click="openDetail(row)">
+                            <IconButton label="Detail pesanan pembelian" @click="openDetail(row)">
                                 <Eye class="h-4 w-4" />
                             </IconButton>
                             <IconButton label="Ubah draft" :disabled="!row.can_edit" @click="openEdit(row)">
@@ -411,7 +396,7 @@ const receive = () => {
             </DataTable>
         </div>
 
-        <DetailModal :show="showDetailModal" :title="detailTarget?.code ?? 'Detail Purchase Order'" max-width="4xl" @close="showDetailModal = false">
+        <DetailModal :show="showDetailModal" :title="detailTarget?.code ?? 'Detail Pesanan Pembelian'" max-width="4xl" @close="showDetailModal = false">
             <div v-if="detailTarget" class="space-y-5">
                 <div class="grid gap-3 text-sm md:grid-cols-3">
                     <div>
@@ -427,15 +412,15 @@ const receive = () => {
                         <div class="mt-1 font-semibold text-slate-950">{{ formatCurrency(detailTarget.total_amount) }}</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-slate-500">Order Date</div>
+                        <div class="text-xs font-semibold uppercase text-slate-500">Tanggal Pesanan</div>
                         <div class="mt-1 text-slate-700">{{ formatDate(detailTarget.order_date) }}</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-slate-500">Received Date</div>
+                        <div class="text-xs font-semibold uppercase text-slate-500">Tanggal Terima</div>
                         <div class="mt-1 text-slate-700">{{ formatDate(detailTarget.received_date) }}</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-slate-500">Receiver</div>
+                        <div class="text-xs font-semibold uppercase text-slate-500">Penerima</div>
                         <div class="mt-1 text-slate-700">{{ detailTarget.received_by ?? '-' }}</div>
                     </div>
                 </div>
@@ -446,9 +431,9 @@ const receive = () => {
                             <tr>
                                 <th class="px-4 py-3">Obat</th>
                                 <th class="px-4 py-3">Batch</th>
-                                <th class="px-4 py-3">Expiry</th>
-                                <th class="px-4 py-3 text-right">Qty</th>
-                                <th class="px-4 py-3 text-right">Unit Cost</th>
+                                <th class="px-4 py-3">Kedaluwarsa</th>
+                                <th class="px-4 py-3 text-right">Jumlah</th>
+                                <th class="px-4 py-3 text-right">Harga Satuan</th>
                                 <th class="px-4 py-3 text-right">Subtotal</th>
                             </tr>
                         </thead>
@@ -489,9 +474,9 @@ const receive = () => {
                         <CheckCircle2 class="h-5 w-5" />
                     </div>
                     <div>
-                        <h2 class="text-lg font-semibold text-slate-950">Terima purchase order?</h2>
+                        <h2 class="text-lg font-semibold text-slate-950">Terima pesanan pembelian?</h2>
                         <p class="mt-2 text-sm text-slate-600">
-                            Stok untuk <span class="font-semibold text-slate-950">{{ receiveTarget?.code }}</span> akan bertambah dan stock movement dibuat.
+                            Stok untuk <span class="font-semibold text-slate-950">{{ receiveTarget?.code }}</span> akan bertambah dan mutasi stok dibuat.
                         </p>
                     </div>
                 </div>

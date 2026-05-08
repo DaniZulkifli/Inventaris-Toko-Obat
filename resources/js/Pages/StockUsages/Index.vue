@@ -14,8 +14,9 @@ import SelectInput from '@/Components/UI/SelectInput.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import TextareaInput from '@/Components/UI/TextareaInput.vue';
 import UiButton from '@/Components/UI/UiButton.vue';
+import { useRealtimeFilters } from '@/Composables/useRealtimeFilters';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { CheckCircle2, Eye, Pencil, Plus, RotateCcw, Search, Trash2, Undo2, X } from 'lucide-vue-next';
+import { CheckCircle2, Eye, Pencil, Plus, RotateCcw, Trash2, Undo2, X } from 'lucide-vue-next';
 
 const props = defineProps({
     stockUsages: { type: Object, required: true },
@@ -138,13 +139,7 @@ const submit = () => {
         : form.patch(route('stock-usages.update', selected.value.id), options);
 };
 
-const applyFilters = () => {
-    router.get(route('stock-usages.index'), filterForm.value, {
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
-    });
-};
+useRealtimeFilters(filterForm, () => route('stock-usages.index'));
 
 const openDetail = (stockUsage) => {
     detailTarget.value = stockUsage;
@@ -202,18 +197,14 @@ const cancelCompleted = () => {
 </script>
 
 <template>
-    <Head title="Stock Usage" />
+    <Head title="Pemakaian Stok" />
 
     <AuthenticatedLayout>
         <div class="space-y-6">
-            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-slate-950">Stock Usage</h2>
-                    <p class="mt-1 text-sm text-slate-500">Draft tidak mengubah stok; stok berkurang saat completed</p>
-                </div>
+            <div class="flex justify-end">
                 <UiButton variant="secondary" @click="resetForm">
                     <RotateCcw class="h-4 w-4" />
-                    Reset Form
+                    Atur Ulang Form
                 </UiButton>
             </div>
 
@@ -221,7 +212,7 @@ const cancelCompleted = () => {
                 <div class="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <h3 class="text-base font-semibold text-slate-950">
-                            {{ mode === 'create' ? 'Form Stock Usage' : `Ubah ${selected?.code}` }}
+                            {{ mode === 'create' ? 'Form Pemakaian Stok' : `Ubah ${selected?.code}` }}
                         </h3>
                         <p v-if="form.errors.status || form.errors.stock" class="mt-1 text-sm font-medium text-red-600">
                             {{ form.errors.status || form.errors.stock }}
@@ -236,7 +227,7 @@ const cancelCompleted = () => {
                 <form class="space-y-5 p-4" @submit.prevent="submit">
                     <div class="grid gap-4 lg:grid-cols-[12rem_14rem_minmax(0,1fr)]">
                         <DateInput id="usage_date" v-model="form.usage_date" label="Tanggal" required :error="form.errors.usage_date" />
-                        <SelectInput id="usage_type" v-model="form.usage_type" label="Tipe Usage" :options="options.usage_types" required :error="form.errors.usage_type" />
+                        <SelectInput id="usage_type" v-model="form.usage_type" label="Tipe Pemakaian" :options="options.usage_types" required :error="form.errors.usage_type" />
                         <TextareaInput id="reason" v-model="form.reason" label="Alasan" required :error="form.errors.reason" />
                     </div>
 
@@ -263,7 +254,7 @@ const cancelCompleted = () => {
                                 <NumberInput
                                     :id="`usage_item_${index}_quantity`"
                                     v-model="item.quantity"
-                                    label="Qty"
+                                    label="Jumlah"
                                     required
                                     min="0.001"
                                     step="0.001"
@@ -301,20 +292,14 @@ const cancelCompleted = () => {
                 </form>
             </section>
 
-            <DataTable :columns="columns" :rows="stockUsages.data" empty-title="Belum ada stock usage">
+            <DataTable :columns="columns" :rows="stockUsages.data" empty-title="Belum ada pemakaian stok">
                 <template #filters>
-                    <form class="grid gap-3 xl:grid-cols-[1fr_13rem_12rem_11rem_11rem_auto]" @submit.prevent="applyFilters">
+                    <form class="grid gap-3 xl:grid-cols-[1fr_13rem_12rem_11rem_11rem]" @submit.prevent>
                         <FormInput id="search" v-model="filterForm.search" label="Pencarian" placeholder="Kode, obat, batch, alasan" />
                         <SelectInput id="usage_type_filter" v-model="filterForm.usage_type" label="Tipe" :options="options.usage_types" placeholder="Semua tipe" />
                         <SelectInput id="status_filter" v-model="filterForm.status" label="Status" :options="options.statuses" placeholder="Semua status" />
                         <DateInput id="date_from" v-model="filterForm.date_from" label="Dari" />
                         <DateInput id="date_to" v-model="filterForm.date_to" label="Sampai" />
-                        <div class="flex items-end">
-                            <UiButton type="submit" class="w-full">
-                                <Search class="h-4 w-4" />
-                                Filter
-                            </UiButton>
-                        </div>
                     </form>
                 </template>
 
@@ -333,16 +318,16 @@ const cancelCompleted = () => {
                     </template>
                     <template v-else-if="column.key === 'actions'">
                         <div class="flex justify-end gap-2">
-                            <IconButton label="Detail stock usage" @click="openDetail(row)">
+                            <IconButton label="Detail pemakaian stok" @click="openDetail(row)">
                                 <Eye class="h-4 w-4" />
                             </IconButton>
                             <IconButton label="Ubah draft" :disabled="!row.can_edit" @click="openEdit(row)">
                                 <Pencil class="h-4 w-4" />
                             </IconButton>
-                            <IconButton label="Complete usage" variant="primary" :disabled="!row.can_complete" @click="confirmComplete(row)">
+                            <IconButton label="Selesaikan pemakaian" variant="primary" :disabled="!row.can_complete" @click="confirmComplete(row)">
                                 <CheckCircle2 class="h-4 w-4" />
                             </IconButton>
-                            <IconButton label="Cancel completed" :disabled="!row.can_cancel" @click="confirmCancel(row)">
+                            <IconButton label="Batalkan yang selesai" :disabled="!row.can_cancel" @click="confirmCancel(row)">
                                 <Undo2 class="h-4 w-4" />
                             </IconButton>
                             <IconButton label="Hapus draft" variant="danger" :disabled="!row.can_delete" @click="confirmDelete(row)">
@@ -359,7 +344,7 @@ const cancelCompleted = () => {
             </DataTable>
         </div>
 
-        <DetailModal :show="showDetailModal" :title="detailTarget?.code ?? 'Detail Stock Usage'" max-width="4xl" @close="showDetailModal = false">
+        <DetailModal :show="showDetailModal" :title="detailTarget?.code ?? 'Detail Pemakaian Stok'" max-width="4xl" @close="showDetailModal = false">
             <div v-if="detailTarget" class="space-y-5">
                 <div class="grid gap-3 text-sm md:grid-cols-4">
                     <div>
@@ -386,8 +371,8 @@ const cancelCompleted = () => {
                             <tr>
                                 <th class="px-4 py-3">Obat</th>
                                 <th class="px-4 py-3">Batch</th>
-                                <th class="px-4 py-3 text-right">Qty</th>
-                                <th class="px-4 py-3 text-right">Cost</th>
+                                <th class="px-4 py-3 text-right">Jumlah</th>
+                                <th class="px-4 py-3 text-right">Biaya</th>
                                 <th class="px-4 py-3 text-right">Estimasi</th>
                             </tr>
                         </thead>
@@ -422,27 +407,27 @@ const cancelCompleted = () => {
 
         <Modal :show="showCompleteModal" max-width="md" :closeable="!completeProcessing" @close="showCompleteModal = false">
             <div class="px-6 py-5">
-                <h2 class="text-lg font-semibold text-slate-950">Complete stock usage?</h2>
+                <h2 class="text-lg font-semibold text-slate-950">Selesaikan pemakaian stok?</h2>
                 <p class="mt-2 text-sm text-slate-600">
-                    Stok batch pada <span class="font-semibold text-slate-950">{{ completeTarget?.code }}</span> akan dikurangi dan stock movement dibuat.
+                    Stok batch pada <span class="font-semibold text-slate-950">{{ completeTarget?.code }}</span> akan dikurangi dan mutasi stok dibuat.
                 </p>
                 <div class="mt-6 flex justify-end gap-2">
                     <UiButton variant="secondary" :disabled="completeProcessing" @click="showCompleteModal = false">Batal</UiButton>
-                    <UiButton :loading="completeProcessing" @click="complete">Complete</UiButton>
+                    <UiButton :loading="completeProcessing" @click="complete">Selesaikan</UiButton>
                 </div>
             </div>
         </Modal>
 
         <Modal :show="showCancelModal" max-width="md" :closeable="!cancelForm.processing" @close="showCancelModal = false">
             <form class="px-6 py-5" @submit.prevent="cancelCompleted">
-                <h2 class="text-lg font-semibold text-slate-950">Cancel completed usage?</h2>
+                <h2 class="text-lg font-semibold text-slate-950">Batalkan pemakaian yang selesai?</h2>
                 <p class="mt-2 text-sm text-slate-600">
-                    Stok dari <span class="font-semibold text-slate-950">{{ cancelTarget?.code }}</span> akan dikembalikan lewat movement cancel_usage.
+                    Stok dari <span class="font-semibold text-slate-950">{{ cancelTarget?.code }}</span> akan dikembalikan lewat mutasi pembatalan pemakaian.
                 </p>
                 <TextareaInput id="cancel_reason" v-model="cancelForm.cancel_reason" class="mt-4" label="Alasan Pembatalan" required :error="cancelForm.errors.cancel_reason" />
                 <div class="mt-6 flex justify-end gap-2">
                     <UiButton variant="secondary" :disabled="cancelForm.processing" @click="showCancelModal = false">Batal</UiButton>
-                    <UiButton type="submit" :loading="cancelForm.processing">Cancel Usage</UiButton>
+                    <UiButton type="submit" :loading="cancelForm.processing">Batalkan Pemakaian</UiButton>
                 </div>
             </form>
         </Modal>

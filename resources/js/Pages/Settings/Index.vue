@@ -32,18 +32,14 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Settings" />
+    <Head title="Pengaturan" />
 
     <AuthenticatedLayout>
         <form class="space-y-6" @submit.prevent="submit">
-            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-slate-950">Settings</h2>
-                    <p class="mt-1 text-sm text-slate-500">Konfigurasi toko dan batas operasional MVP</p>
-                </div>
+            <div class="flex justify-end">
                 <UiButton type="submit" :loading="form.processing">
                     <Save class="h-4 w-4" />
-                    Simpan Settings
+                    Simpan Pengaturan
                 </UiButton>
             </div>
 
@@ -53,18 +49,18 @@ const submit = () => {
                     <FormInput id="store_name" v-model="form.settings.store_name" label="Nama Toko" required :error="form.errors['settings.store_name']" />
                     <FormInput id="store_phone" v-model="form.settings.store_phone" label="Telepon" :error="form.errors['settings.store_phone']" />
                     <TextareaInput id="store_address" v-model="form.settings.store_address" label="Alamat" class="lg:col-span-2" :error="form.errors['settings.store_address']" />
-                    <FormInput id="timezone" v-model="form.settings.timezone" label="Timezone" required :error="form.errors['settings.timezone']" />
-                    <NumberInput id="pagination_per_page" v-model="form.settings.pagination_per_page" label="Pagination per Page" required :error="form.errors['settings.pagination_per_page']" />
+                    <FormInput id="timezone" v-model="form.settings.timezone" label="Zona Waktu" required :error="form.errors['settings.timezone']" />
+                    <NumberInput id="pagination_per_page" v-model="form.settings.pagination_per_page" label="Data per Halaman" required :error="form.errors['settings.pagination_per_page']" />
                 </div>
             </section>
 
             <section class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
                 <h3 class="text-base font-semibold text-slate-950">Operasional Inventaris</h3>
                 <div class="mt-4 grid gap-4 lg:grid-cols-2">
-                    <NumberInput id="default_minimum_stock" v-model="form.settings.default_minimum_stock" label="Default Minimum Stock" required step="0.001" :error="form.errors['settings.default_minimum_stock']" />
+                    <NumberInput id="default_minimum_stock" v-model="form.settings.default_minimum_stock" label="Stok Minimum Bawaan" required step="0.001" :error="form.errors['settings.default_minimum_stock']" />
                     <NumberInput id="expiry_warning_days" v-model="form.settings.expiry_warning_days" label="Hari Peringatan Kedaluwarsa" required :error="form.errors['settings.expiry_warning_days']" />
-                    <NumberInput id="upload_max_file_size_mb" v-model="form.settings.upload_max_file_size_mb" label="Maksimal Upload Gambar (MB)" required :error="form.errors['settings.upload_max_file_size_mb']" />
-                    <FormInput id="report_export_formats" v-model="form.settings.report_export_formats" label="Format Export Laporan" required :error="form.errors['settings.report_export_formats']" />
+                    <NumberInput id="upload_max_file_size_mb" v-model="form.settings.upload_max_file_size_mb" label="Maksimal Unggah Gambar (MB)" required :error="form.errors['settings.upload_max_file_size_mb']" />
+                    <FormInput id="report_export_formats" v-model="form.settings.report_export_formats" label="Format Ekspor Laporan" required :error="form.errors['settings.report_export_formats']" />
                 </div>
             </section>
 

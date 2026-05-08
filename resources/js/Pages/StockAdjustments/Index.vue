@@ -13,8 +13,9 @@ import SelectInput from '@/Components/UI/SelectInput.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import TextareaInput from '@/Components/UI/TextareaInput.vue';
 import UiButton from '@/Components/UI/UiButton.vue';
+import { useRealtimeFilters } from '@/Composables/useRealtimeFilters';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { CheckCircle2, Eye, Pencil, Plus, RotateCcw, Search, Undo2, X } from 'lucide-vue-next';
+import { CheckCircle2, Eye, Pencil, Plus, RotateCcw, Undo2, X } from 'lucide-vue-next';
 
 const props = defineProps({
     adjustments: { type: Object, required: true },
@@ -131,13 +132,7 @@ const submit = () => {
         : form.patch(route('stock-adjustments.update', selected.value.id), options);
 };
 
-const applyFilters = () => {
-    router.get(route('stock-adjustments.index'), filterForm.value, {
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
-    });
-};
+useRealtimeFilters(filterForm, () => route('stock-adjustments.index'));
 
 const openDetail = (adjustment) => {
     detailTarget.value = adjustment;
@@ -179,18 +174,14 @@ const cancelApproved = () => {
 </script>
 
 <template>
-    <Head title="Stock Adjustment" />
+    <Head title="Penyesuaian Stok" />
 
     <AuthenticatedLayout>
         <div class="space-y-6">
-            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-slate-950">Stock Adjustment</h2>
-                    <p class="mt-1 text-sm text-slate-500">Draft stock opname disetujui oleh Super Admin</p>
-                </div>
+            <div class="flex justify-end">
                 <UiButton variant="secondary" @click="resetForm">
                     <RotateCcw class="h-4 w-4" />
-                    Reset Form
+                    Atur Ulang Form
                 </UiButton>
             </div>
 
@@ -198,7 +189,7 @@ const cancelApproved = () => {
                 <div class="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <h3 class="text-base font-semibold text-slate-950">
-                            {{ mode === 'create' ? 'Form Stock Adjustment' : `Ubah ${selected?.code}` }}
+                            {{ mode === 'create' ? 'Form Penyesuaian Stok' : `Ubah ${selected?.code}` }}
                         </h3>
                         <p v-if="form.errors.status || form.errors.stock" class="mt-1 text-sm font-medium text-red-600">
                             {{ form.errors.status || form.errors.stock }}
@@ -218,7 +209,7 @@ const cancelApproved = () => {
 
                     <div class="space-y-3">
                         <div class="flex items-center justify-between gap-3">
-                            <h4 class="text-sm font-semibold text-slate-800">Item Stock Opname</h4>
+                            <h4 class="text-sm font-semibold text-slate-800">Item Opname Stok</h4>
                             <UiButton size="sm" variant="secondary" @click="addItem">
                                 <Plus class="h-4 w-4" />
                                 Tambah Item
@@ -290,19 +281,13 @@ const cancelApproved = () => {
                 </form>
             </section>
 
-            <DataTable :columns="columns" :rows="adjustments.data" empty-title="Belum ada stock adjustment">
+            <DataTable :columns="columns" :rows="adjustments.data" empty-title="Belum ada penyesuaian stok">
                 <template #filters>
-                    <form class="grid gap-3 xl:grid-cols-[1fr_12rem_11rem_11rem_auto]" @submit.prevent="applyFilters">
+                    <form class="grid gap-3 xl:grid-cols-[1fr_12rem_11rem_11rem]" @submit.prevent>
                         <FormInput id="search" v-model="filterForm.search" label="Pencarian" placeholder="Kode, obat, batch, alasan" />
                         <SelectInput id="status_filter" v-model="filterForm.status" label="Status" :options="options.statuses" placeholder="Semua status" />
                         <DateInput id="date_from" v-model="filterForm.date_from" label="Dari" />
                         <DateInput id="date_to" v-model="filterForm.date_to" label="Sampai" />
-                        <div class="flex items-end">
-                            <UiButton type="submit" class="w-full">
-                                <Search class="h-4 w-4" />
-                                Filter
-                            </UiButton>
-                        </div>
                     </form>
                 </template>
 
@@ -317,16 +302,16 @@ const cancelApproved = () => {
                     </template>
                     <template v-else-if="column.key === 'actions'">
                         <div class="flex justify-end gap-2">
-                            <IconButton label="Detail stock adjustment" @click="openDetail(row)">
+                            <IconButton label="Detail penyesuaian stok" @click="openDetail(row)">
                                 <Eye class="h-4 w-4" />
                             </IconButton>
                             <IconButton label="Ubah draft" :disabled="!row.can_edit" @click="openEdit(row)">
                                 <Pencil class="h-4 w-4" />
                             </IconButton>
-                            <IconButton label="Approve adjustment" variant="primary" :disabled="!row.can_approve" @click="confirmApprove(row)">
+                            <IconButton label="Setujui penyesuaian" variant="primary" :disabled="!row.can_approve" @click="confirmApprove(row)">
                                 <CheckCircle2 class="h-4 w-4" />
                             </IconButton>
-                            <IconButton label="Cancel approved" :disabled="!row.can_cancel" @click="confirmCancel(row)">
+                            <IconButton label="Batalkan yang disetujui" :disabled="!row.can_cancel" @click="confirmCancel(row)">
                                 <Undo2 class="h-4 w-4" />
                             </IconButton>
                         </div>
@@ -340,7 +325,7 @@ const cancelApproved = () => {
             </DataTable>
         </div>
 
-        <DetailModal :show="showDetailModal" :title="detailTarget?.code ?? 'Detail Stock Adjustment'" max-width="4xl" @close="showDetailModal = false">
+        <DetailModal :show="showDetailModal" :title="detailTarget?.code ?? 'Detail Penyesuaian Stok'" max-width="4xl" @close="showDetailModal = false">
             <div v-if="detailTarget" class="space-y-5">
                 <div class="grid gap-3 text-sm md:grid-cols-4">
                     <div>
@@ -370,7 +355,7 @@ const cancelApproved = () => {
                                 <th class="px-4 py-3 text-right">Sistem</th>
                                 <th class="px-4 py-3 text-right">Fisik</th>
                                 <th class="px-4 py-3 text-right">Selisih</th>
-                                <th class="px-4 py-3 text-right">Cost</th>
+                                <th class="px-4 py-3 text-right">Biaya</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -397,27 +382,27 @@ const cancelApproved = () => {
 
         <Modal :show="showApproveModal" max-width="md" :closeable="!approveProcessing" @close="showApproveModal = false">
             <div class="px-6 py-5">
-                <h2 class="text-lg font-semibold text-slate-950">Approve stock adjustment?</h2>
+                <h2 class="text-lg font-semibold text-slate-950">Setujui penyesuaian stok?</h2>
                 <p class="mt-2 text-sm text-slate-600">
                     Selisih pada <span class="font-semibold text-slate-950">{{ approveTarget?.code }}</span> akan mengubah stok batch.
                 </p>
                 <div class="mt-6 flex justify-end gap-2">
                     <UiButton variant="secondary" :disabled="approveProcessing" @click="showApproveModal = false">Batal</UiButton>
-                    <UiButton :loading="approveProcessing" @click="approve">Approve</UiButton>
+                    <UiButton :loading="approveProcessing" @click="approve">Setujui</UiButton>
                 </div>
             </div>
         </Modal>
 
         <Modal :show="showCancelModal" max-width="md" :closeable="!cancelForm.processing" @close="showCancelModal = false">
             <form class="px-6 py-5" @submit.prevent="cancelApproved">
-                <h2 class="text-lg font-semibold text-slate-950">Cancel approved adjustment?</h2>
+                <h2 class="text-lg font-semibold text-slate-950">Batalkan penyesuaian yang disetujui?</h2>
                 <p class="mt-2 text-sm text-slate-600">
-                    Movement dari <span class="font-semibold text-slate-950">{{ cancelTarget?.code }}</span> akan dibalik dengan cancel_adjustment.
+                    Mutasi dari <span class="font-semibold text-slate-950">{{ cancelTarget?.code }}</span> akan dibalik dengan pembatalan penyesuaian.
                 </p>
                 <TextareaInput id="cancel_reason" v-model="cancelForm.cancel_reason" class="mt-4" label="Alasan Pembatalan" required :error="cancelForm.errors.cancel_reason" />
                 <div class="mt-6 flex justify-end gap-2">
                     <UiButton variant="secondary" :disabled="cancelForm.processing" @click="showCancelModal = false">Batal</UiButton>
-                    <UiButton type="submit" :loading="cancelForm.processing">Cancel Adjustment</UiButton>
+                    <UiButton type="submit" :loading="cancelForm.processing">Batalkan Penyesuaian</UiButton>
                 </div>
             </form>
         </Modal>

@@ -60,8 +60,8 @@ class StockUsageController extends Controller
                 'usage_types' => $this->usageTypeOptions(),
                 'statuses' => [
                     ['value' => StockUsageStatus::Draft->value, 'label' => 'Draft'],
-                    ['value' => StockUsageStatus::Completed->value, 'label' => 'Completed'],
-                    ['value' => StockUsageStatus::Cancelled->value, 'label' => 'Cancelled'],
+                    ['value' => StockUsageStatus::Completed->value, 'label' => 'Selesai'],
+                    ['value' => StockUsageStatus::Cancelled->value, 'label' => 'Dibatalkan'],
                 ],
                 'batches' => $this->batchOptions(),
             ],
@@ -77,7 +77,7 @@ class StockUsageController extends Controller
             'status' => $stockUsage->status?->value ?? $stockUsage->status,
         ]);
 
-        return back()->with('success', 'Stock usage draft berhasil dibuat.');
+        return back()->with('success', 'Draft pemakaian stok berhasil dibuat.');
     }
 
     public function update(
@@ -92,7 +92,7 @@ class StockUsageController extends Controller
             'stock_usage_id' => $stockUsage->id,
         ]);
 
-        return back()->with('success', 'Stock usage draft berhasil diubah.');
+        return back()->with('success', 'Draft pemakaian stok berhasil diubah.');
     }
 
     public function destroy(Request $request, StockUsage $stockUsage, StockUsageService $stockUsageService, ActivityLogService $activityLog): RedirectResponse
@@ -104,7 +104,7 @@ class StockUsageController extends Controller
             'stock_usage_id' => $stockUsage->id,
         ]);
 
-        return back()->with('success', 'Stock usage draft berhasil dihapus.');
+        return back()->with('success', 'Draft pemakaian stok berhasil dihapus.');
     }
 
     public function complete(Request $request, StockUsage $stockUsage, StockUsageService $stockUsageService, ActivityLogService $activityLog): RedirectResponse
@@ -116,7 +116,7 @@ class StockUsageController extends Controller
             'estimated_total_cost' => $stockUsage->estimated_total_cost,
         ]);
 
-        return back()->with('success', 'Stock usage selesai dan stok sudah dikurangi.');
+        return back()->with('success', 'Pemakaian stok selesai dan stok sudah dikurangi.');
     }
 
     public function cancel(Request $request, StockUsage $stockUsage, StockUsageService $stockUsageService, ActivityLogService $activityLog): RedirectResponse
@@ -132,7 +132,7 @@ class StockUsageController extends Controller
             'reason' => $validated['cancel_reason'],
         ]);
 
-        return back()->with('success', 'Stock usage completed berhasil dibatalkan.');
+        return back()->with('success', 'Pemakaian stok yang selesai berhasil dibatalkan.');
     }
 
     /**
@@ -160,7 +160,7 @@ class StockUsageController extends Controller
             ['value' => StockUsageType::Damaged->value, 'label' => 'Rusak'],
             ['value' => StockUsageType::Expired->value, 'label' => 'Kedaluwarsa'],
             ['value' => StockUsageType::Lost->value, 'label' => 'Hilang'],
-            ['value' => StockUsageType::Sample->value, 'label' => 'Sample'],
+            ['value' => StockUsageType::Sample->value, 'label' => 'Sampel'],
             ['value' => StockUsageType::ReturnSupplier->value, 'label' => 'Retur Supplier'],
             ['value' => StockUsageType::InternalUse->value, 'label' => 'Pemakaian Internal'],
             ['value' => StockUsageType::Other->value, 'label' => 'Lainnya'],

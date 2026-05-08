@@ -205,7 +205,7 @@ class StockMovementController extends Controller
             ->pluck('reference_type')
             ->map(fn (string $referenceType): array => [
                 'value' => $referenceType,
-                'label' => str($referenceType)->replace('_', ' ')->title()->toString(),
+                'label' => $this->referenceTypeLabel($referenceType),
             ])
             ->all();
     }
@@ -213,14 +213,25 @@ class StockMovementController extends Controller
     private function movementTypeLabel(?string $type): string
     {
         return [
-            'opening_stock' => 'Opening Stock',
-            'purchase_in' => 'Purchase In',
-            'sale_out' => 'Sale Out',
-            'usage_out' => 'Usage Out',
-            'adjustment_in' => 'Adjustment In',
-            'adjustment_out' => 'Adjustment Out',
-            'cancel_usage' => 'Cancel Usage',
-            'cancel_adjustment' => 'Cancel Adjustment',
+            'opening_stock' => 'Stok Awal',
+            'purchase_in' => 'Pembelian Masuk',
+            'sale_out' => 'Penjualan Keluar',
+            'usage_out' => 'Pemakaian Keluar',
+            'adjustment_in' => 'Penyesuaian Masuk',
+            'adjustment_out' => 'Penyesuaian Keluar',
+            'cancel_usage' => 'Pembatalan Pemakaian',
+            'cancel_adjustment' => 'Pembatalan Penyesuaian',
         ][$type] ?? '-';
+    }
+
+    private function referenceTypeLabel(string $type): string
+    {
+        return [
+            'purchase_orders' => 'Pesanan Pembelian',
+            'sales' => 'Penjualan',
+            'stock_usages' => 'Pemakaian Stok',
+            'stock_adjustments' => 'Penyesuaian Stok',
+            'opening_stock' => 'Stok Awal',
+        ][$type] ?? str($type)->replace('_', ' ')->title()->toString();
     }
 }

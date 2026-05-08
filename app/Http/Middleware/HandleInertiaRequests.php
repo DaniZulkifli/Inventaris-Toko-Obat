@@ -39,6 +39,7 @@ class HandleInertiaRequests extends Middleware
             'navigationGroups' => fn () => $this->navigationGroups($request),
             'breadcrumbs' => fn () => $this->breadcrumbs($request),
             'currentPage' => fn () => $this->currentPage($request),
+            'flash' => fn () => $this->flashMessages($request),
             'store' => fn () => $this->storeSettings($request),
         ];
     }
@@ -98,7 +99,7 @@ class HandleInertiaRequests extends Middleware
         $group = $item['group'] ?? null;
 
         return array_values(array_filter([
-            ['label' => 'Dashboard', 'href' => route('dashboard')],
+            ['label' => 'Dasbor', 'href' => route('dashboard')],
             $group ? ['label' => $group, 'href' => null] : null,
             ['label' => $label, 'href' => null],
         ]));
@@ -113,7 +114,7 @@ class HandleInertiaRequests extends Middleware
         $item = collect($this->availableNavigationItems($request))
             ->firstWhere('route', $routeName);
 
-        $label = $item['label'] ?? $this->pageLabels()[$routeName] ?? 'Dashboard';
+        $label = $item['label'] ?? $this->pageLabels()[$routeName] ?? 'Dasbor';
 
         return [
             'title' => $label,
@@ -139,6 +140,7 @@ class HandleInertiaRequests extends Middleware
             ->map(fn (array $item): array => [
                 ...$item,
                 'href' => route($item['route']),
+                'activeRoutes' => $item['activeRoutes'] ?? [$item['route']],
             ])
             ->values()
             ->all();
@@ -150,26 +152,26 @@ class HandleInertiaRequests extends Middleware
     private function navigationItems(): array
     {
         return [
-            $this->navItem('Dashboard', 'dashboard', 'LayoutDashboard', 'Utama', 'LayoutDashboard', 10, ['super_admin', 'admin', 'employee']),
+            $this->navItem('Dasbor', 'dashboard', 'LayoutDashboard', 'Utama', 'LayoutDashboard', 10, ['super_admin', 'admin', 'employee']),
 
-            $this->navItem('Referensi Obat', 'references.index', 'LibraryBig', 'Master Data', 'Database', 20, ['super_admin', 'admin']),
-            $this->navItem('Supplier', 'suppliers.index', 'Truck', 'Master Data', 'Database', 20, ['super_admin', 'admin']),
-            $this->navItem('Obat dan Batch', 'medicines.index', 'Pill', 'Master Data', 'Database', 20, ['super_admin', 'admin']),
+            $this->navItem('Referensi Obat', 'references.index', 'LibraryBig', 'Data Master', 'Database', 20, ['super_admin', 'admin'], ['references.*']),
+            $this->navItem('Supplier', 'suppliers.index', 'Truck', 'Data Master', 'Database', 20, ['super_admin', 'admin'], ['suppliers.*']),
+            $this->navItem('Obat dan Batch', 'medicines.index', 'Pill', 'Data Master', 'Database', 20, ['super_admin', 'admin'], ['medicines.*', 'medicine-batches.*']),
 
-            $this->navItem('Obat Aktif', 'medicines.index', 'Pill', 'Monitoring', 'Activity', 40, ['employee']),
-            $this->navItem('Purchase Order', 'purchase-orders.index', 'ClipboardList', 'Transaksi', 'ReceiptText', 30, ['super_admin', 'admin']),
-            $this->navItem('Penjualan', 'sales.index', 'ShoppingCart', 'Transaksi', 'ReceiptText', 30, ['super_admin', 'admin', 'employee']),
+            $this->navItem('Obat Aktif', 'medicines.index', 'Pill', 'Monitoring', 'Activity', 40, ['employee'], ['medicines.*']),
+            $this->navItem('Pesanan Pembelian', 'purchase-orders.index', 'ClipboardList', 'Transaksi', 'ReceiptText', 30, ['super_admin', 'admin'], ['purchase-orders.*']),
+            $this->navItem('Penjualan', 'sales.index', 'ShoppingCart', 'Transaksi', 'ReceiptText', 30, ['super_admin', 'admin', 'employee'], ['sales.index', 'sales.create', 'sales.store']),
             $this->navItem('Riwayat Penjualan Saya', 'sales.my-history', 'History', 'Transaksi', 'ReceiptText', 30, ['employee']),
-            $this->navItem('Stock Usage', 'stock-usages.index', 'ArchiveX', 'Transaksi', 'ReceiptText', 30, ['super_admin', 'admin']),
-            $this->navItem('Stock Adjustment', 'stock-adjustments.index', 'SlidersHorizontal', 'Transaksi', 'ReceiptText', 30, ['super_admin', 'admin']),
+            $this->navItem('Pemakaian Stok', 'stock-usages.index', 'ArchiveX', 'Transaksi', 'ReceiptText', 30, ['super_admin', 'admin'], ['stock-usages.*']),
+            $this->navItem('Penyesuaian Stok', 'stock-adjustments.index', 'SlidersHorizontal', 'Transaksi', 'ReceiptText', 30, ['super_admin', 'admin'], ['stock-adjustments.*']),
 
             $this->navItem('Monitoring Stok dan Batch', 'stock.summary', 'Activity', 'Monitoring', 'Activity', 40, ['super_admin', 'admin', 'employee']),
-            $this->navItem('Stock Movement', 'stock-movements.index', 'ArrowLeftRight', 'Monitoring', 'Activity', 40, ['super_admin', 'admin']),
+            $this->navItem('Mutasi Stok', 'stock-movements.index', 'ArrowLeftRight', 'Monitoring', 'Activity', 40, ['super_admin', 'admin'], ['stock-movements.*']),
 
-            $this->navItem('Laporan', 'reports.index', 'FileBarChart', 'Laporan', 'FileBarChart', 50, ['super_admin', 'admin']),
+            $this->navItem('Laporan', 'reports.index', 'FileBarChart', 'Laporan', 'FileBarChart', 50, ['super_admin', 'admin'], ['reports.*']),
 
-            $this->navItem('Users', 'users.index', 'Users', 'Administrasi', 'Shield', 60, ['super_admin']),
-            $this->navItem('Settings', 'settings.index', 'Settings', 'Administrasi', 'Shield', 60, ['super_admin']),
+            $this->navItem('Pengguna', 'users.index', 'Users', 'Administrasi', 'Shield', 60, ['super_admin'], ['users.*']),
+            $this->navItem('Pengaturan', 'settings.index', 'Settings', 'Administrasi', 'Shield', 60, ['super_admin'], ['settings.*']),
         ];
     }
 
@@ -183,9 +185,10 @@ class HandleInertiaRequests extends Middleware
         string $group,
         string $groupIcon,
         int $groupOrder,
-        array $roles
+        array $roles,
+        ?array $activeRoutes = null
     ): array {
-        return compact('label', 'route', 'icon', 'group', 'groupIcon', 'groupOrder', 'roles');
+        return compact('label', 'route', 'icon', 'group', 'groupIcon', 'groupOrder', 'roles', 'activeRoutes');
     }
 
     /**
@@ -195,6 +198,21 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             'profile.edit' => 'Profil',
+            'sales.create' => 'Transaksi Baru',
+        ];
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function flashMessages(Request $request): array
+    {
+        return [
+            'success' => $request->session()->get('success'),
+            'error' => $request->session()->get('error'),
+            'warning' => $request->session()->get('warning'),
+            'info' => $request->session()->get('info'),
+            'status' => $request->session()->get('status'),
         ];
     }
 
